@@ -30,8 +30,8 @@ The first public screen should be the usable catalog, not a marketing-only landi
 - Email: Resend.
 - Analytics: Umami.
 - Monitoring: Sentry.
-- Hosting: Vercel for web, Render for API.
-- Keep-alive: cron-job.org calls `GET /healthz` every 10 minutes.
+- Hosting: Vercel for web and Vercel Go Runtime for API.
+- Keep-alive: not required while the API runs on Vercel Go Runtime.
 
 ## Architecture Rules
 
@@ -62,7 +62,7 @@ The first public screen should be the usable catalog, not a marketing-only landi
 - Add request IDs, structured logs, panic recovery, CORS, rate limiting, and Sentry.
 - Use `GET /healthz` for cron and liveness.
 - Use `GET /readyz` for dependency readiness.
-- Never persist uploaded files on Render's filesystem.
+- Never persist uploaded files on the backend filesystem.
 - Generate short-lived signed Supabase Storage URLs.
 - Store password hashes and refresh token hashes only.
 - Protect admin APIs with role checks.

@@ -7,7 +7,7 @@ KIMS is planned as a small production-quality monorepo that can grow into a larg
 ```text
 Browser
   -> Next.js web app on Vercel
-  -> Go Chi API on Render
+  -> Go Chi API on Vercel Go Runtime
   -> Supabase PostgreSQL
   -> Supabase Storage private buckets
 
@@ -15,7 +15,7 @@ External services:
   Resend for email
   Umami for analytics
   Sentry for monitoring
-  cron-job.org for Render keep-alive
+  no backend keep-alive service required on Vercel
 ```
 
 ## Repository Layout
@@ -61,7 +61,7 @@ Recommended frontend feature groups:
 - Put PostgreSQL access behind repository/query modules.
 - Use migrations for schema changes.
 - Keep Supabase service-role access backend-only.
-- Do not store uploaded files on Render's filesystem.
+- Do not store uploaded files on the backend filesystem.
 
 Recommended backend package groups:
 
@@ -87,10 +87,10 @@ Recommended backend package groups:
 ## Deployment
 
 - Vercel deploys `apps/web`.
-- Render deploys `apps/api`.
+- Vercel Go Runtime deploys `apps/api`.
 - Supabase hosts PostgreSQL and Storage.
 - GitHub Actions validates pull requests and `main`.
-- cron-job.org pings `GET /healthz` every 10 minutes.
+- Backend `/healthz` is used for direct uptime checks.
 
 ## Security And Privacy
 
@@ -108,4 +108,4 @@ Recommended backend package groups:
 - Use compressed delivery audio only.
 - Avoid background workers that require paid infrastructure.
 - Keep email volume below Resend Free limits.
-- Recheck Vercel, Render, Supabase, Resend, Sentry, Umami, GitHub Actions, and cron-job.org limits before launch.
+- Recheck Vercel, Supabase, Resend, Sentry, Umami, and GitHub Actions limits before launch.

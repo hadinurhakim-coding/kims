@@ -1,6 +1,6 @@
 # KIMS API Plan
 
-The KIMS API is a Go Chi service hosted on Render. All API routes return JSON unless they are health checks. Auth uses custom JWT access tokens and hashed refresh tokens.
+The KIMS API is a Go Chi service hosted on Vercel Go Runtime. All API routes return JSON unless they are health checks. Auth uses custom JWT access tokens and hashed refresh tokens.
 
 ## General Rules
 
@@ -49,7 +49,7 @@ Error responses should use:
 ## Health
 
 - [ ] `GET /healthz`
-  - Used by cron-job.org and basic liveness checks.
+  - Used by uptime checks and deployment smoke tests.
   - Should not require database access.
 
 - [ ] `GET /readyz`

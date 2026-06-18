@@ -11,7 +11,11 @@ import (
 func main() {
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
-		addr = ":8080"
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		addr = ":" + port
 	}
 
 	server := &http.Server{

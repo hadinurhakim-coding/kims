@@ -15,7 +15,7 @@ Status: Step 1 scaffold is in place with a Next.js web app, Go API skeleton, doc
 ## Tech Stack
 
 - Frontend: Next.js, TypeScript, TailwindCSS, Wavesurfer.js, Vercel
-- Backend: Go, Chi, Render
+- Backend: Go, Chi, Vercel Go Runtime
 - Database: PostgreSQL via Supabase
 - File storage: Supabase Storage
 - Auth: custom JWT in Go
@@ -23,7 +23,7 @@ Status: Step 1 scaffold is in place with a Next.js web app, Go API skeleton, doc
 - Analytics: Umami
 - Monitoring: Sentry
 - CI/CD: GitHub and GitHub Actions
-- Keep-alive: cron-job.org pinging the backend every 10 minutes
+- Keep-alive: not required while the backend runs on Vercel Go Runtime
 
 ## Repository Structure
 
@@ -51,11 +51,11 @@ kims/
 
 ## Free-Tier Notes
 
-- Vercel Hobby, Render Free, Supabase Free, Resend Free, Sentry Developer, Umami, GitHub Actions, and cron-job.org must be rechecked before launch because limits can change.
+- Vercel Hobby/Go Runtime, Supabase Free, Resend Free, Sentry Developer, Umami, and GitHub Actions must be rechecked before launch because limits can change.
 - Store compressed delivery audio only.
 - Keep MVP storage under about 900 MB.
 - Use signed URLs for Supabase Storage assets.
-- Render Free can go idle, so cron-job.org should call `GET /healthz` every 10 minutes.
+- Vercel Go Runtime does not need a cron-job.org keep-alive ping.
 
 ## Development Quality Bar
 

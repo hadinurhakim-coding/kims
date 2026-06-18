@@ -29,13 +29,13 @@ Planning date: 2026-06-18
 ## Step 2: Free-Tier Infrastructure
 
 - [ ] Create a Vercel Hobby project for the frontend.
-- [ ] Create a Render Free web service for the Go backend.
+- [ ] Create a Vercel Go Runtime project for the Go backend.
 - [ ] Create one Supabase Free project for PostgreSQL and Storage.
 - [ ] Create private Supabase Storage buckets named `audio` and `covers`.
 - [ ] Create a Resend Free account for auth emails.
 - [ ] Configure Sentry Developer plan for frontend and backend errors.
 - [ ] Configure Umami analytics for privacy-friendly product events.
-- [ ] Configure cron-job.org to ping `GET /healthz` every 10 minutes.
+- [ ] Skip cron-job.org while the backend runs on Vercel Go Runtime.
 - [ ] Verify all vendor limits again before launch.
 
 ## Step 3: Free-Tier Guardrails
@@ -45,13 +45,13 @@ Planning date: 2026-06-18
 - [ ] Keep each track under 12 MB where practical.
 - [ ] Keep total MVP storage under about 900 MB.
 - [ ] Generate short-lived signed URLs for audio and cover access.
-- [ ] Do not persist uploaded files on Render's filesystem.
+- [ ] Do not persist uploaded files on the backend filesystem.
 - [ ] Monitor Supabase storage and egress manually during beta usage.
-- [ ] Keep backend background work lightweight enough for Render Free.
+- [ ] Keep backend work lightweight enough for Vercel Function limits.
 
 ## Step 4: Backend MVP
 
-- [ ] Add `GET /healthz` for cron-job.org and uptime checks.
+- [ ] Add `GET /healthz` for uptime checks.
 - [ ] Add `GET /readyz` for database/storage readiness.
 - [ ] Add structured logging, request IDs, CORS, panic recovery, and rate limiting.
 - [ ] Add Sentry error reporting.
@@ -127,10 +127,10 @@ Planning date: 2026-06-18
 - [ ] Run frontend lint, typecheck, test, and production build in CI.
 - [ ] Run backend tests in CI.
 - [ ] Deploy frontend previews through Vercel.
-- [ ] Deploy backend from `main` through Render.
+- [ ] Deploy backend from `main` through Vercel Go Runtime.
 - [ ] Apply Supabase migrations intentionally, not automatically from unreviewed branches.
-- [ ] Confirm all production env vars are set in Vercel and Render.
-- [ ] Confirm cron-job.org ping is active after backend deploy.
+- [ ] Confirm all production env vars are set in Vercel.
+- [ ] Confirm backend `/healthz` responds after deploy.
 - [ ] Smoke test browse, play, download, signup, login, favorite, playlist, and admin upload.
 - [ ] Record known free-tier limits in release notes.
 
