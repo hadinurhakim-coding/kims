@@ -1,0 +1,19 @@
+{
+  "name": "kims",
+  "private": true,
+  "version": "0.1.0",
+  "description": "KIMS monorepo for the web app and Go API.",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "web:dev": "npm run dev --workspace @kims/web",
+    "web:build": "npm run build --workspace @kims/web",
+    "web:lint": "npm run lint --workspace @kims/web",
+    "web:typecheck": "npm run typecheck --workspace @kims/web",
+    "web:test": "npm run test --workspace @kims/web"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
