@@ -49,6 +49,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
 
       - name: Test
         run: go test ./...
