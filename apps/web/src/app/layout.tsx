@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { AppShell } from "../components/shell/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <AppShell>{children}</AppShell>
         {umamiScriptUrl && umamiWebsiteId ? (
           <Script
             data-website-id={umamiWebsiteId}
