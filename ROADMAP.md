@@ -33,7 +33,7 @@ Planning date: 2026-06-18
 - [ ] Create one Supabase Free project for PostgreSQL and Storage.
 - [ ] Create private Supabase Storage buckets named `audio` and `covers`.
 - [x] Defer Resend until KIMS has a custom sending domain.
-- [ ] Configure Sentry Developer plan for frontend and backend errors.
+- [x] Configure Sentry Developer plan for frontend and backend errors.
 - [ ] Configure Umami analytics for privacy-friendly product events.
 - [ ] Skip cron-job.org while the backend runs on Vercel Go Runtime.
 - [ ] Verify all vendor limits again before launch.
@@ -54,7 +54,7 @@ Planning date: 2026-06-18
 - [ ] Add `GET /healthz` for uptime checks.
 - [ ] Add `GET /readyz` for database/storage readiness.
 - [ ] Add structured logging, request IDs, CORS, panic recovery, and rate limiting.
-- [ ] Add Sentry error reporting.
+- [x] Add Sentry error reporting.
 - [ ] Implement custom JWT auth with `admin` and `creator` roles.
 - [ ] Store refresh tokens as hashed records and deliver them with HttpOnly Secure cookies.
 - [ ] Implement email verification and password reset after a custom email domain is available.
@@ -117,8 +117,8 @@ Planning date: 2026-06-18
 - [ ] Track page views with Umami.
 - [ ] Track search, play, download, favorite, playlist create, signup, and login events.
 - [ ] Avoid logging JWTs, refresh tokens, passwords, signed URLs, or personal messages.
-- [ ] Add frontend Sentry error boundary.
-- [ ] Add backend Sentry recovery middleware.
+- [x] Add frontend Sentry error boundary.
+- [x] Add backend Sentry recovery middleware.
 - [ ] Document what analytics are collected.
 - [ ] Keep analytics privacy-friendly and avoid unnecessary personal data.
 

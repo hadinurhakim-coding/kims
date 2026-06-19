@@ -6,9 +6,14 @@ import (
 	"os"
 
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/httpapi"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/observability"
 )
 
 func main() {
+	if err := observability.InitSentry(); err != nil {
+		log.Printf("sentry initialization failed: %v", err)
+	}
+
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
 		port := os.Getenv("PORT")
@@ -20,7 +25,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    addr,
-		Handler: httpapi.NewRouter(),
+		Handler: observability.SentryMiddleware(httpapi.NewRouter()),
 	}
 
 	log.Printf("kims api listening on %s", addr)
