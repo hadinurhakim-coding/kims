@@ -35,7 +35,7 @@ Planning date: 2026-06-18
 - [x] Create private Supabase Storage buckets named `audio` and `covers`.
 - [x] Defer Resend until KIMS has a custom sending domain.
 - [x] Configure Sentry Developer plan for frontend and backend errors.
-- [ ] Configure Umami analytics for privacy-friendly product events.
+- [x] Configure Umami analytics for privacy-friendly product events.
 - [x] Skip cron-job.org while the backend runs on Vercel Go Runtime.
 - [ ] Verify all vendor limits again before launch.
 
@@ -115,7 +115,7 @@ Planning date: 2026-06-18
 
 ## Step 9: Analytics, Monitoring, And Privacy
 
-- [ ] Track page views with Umami.
+- [x] Track page views with Umami.
 - [ ] Track search, play, download, favorite, playlist create, signup, and login events.
 - [ ] Avoid logging JWTs, refresh tokens, passwords, signed URLs, or personal messages.
 - [x] Add frontend Sentry error boundary.
