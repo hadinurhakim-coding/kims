@@ -28,14 +28,15 @@ Planning date: 2026-06-18
 
 ## Step 2: Free-Tier Infrastructure
 
-- [ ] Create a Vercel Hobby project for the frontend.
-- [ ] Create a Vercel Go Runtime project for the Go backend.
-- [ ] Create one Supabase Free project for PostgreSQL and Storage.
-- [ ] Create private Supabase Storage buckets named `audio` and `covers`.
+- [x] Create a Vercel Hobby project for the frontend.
+- [x] Create a Vercel Go Runtime project for the Go backend.
+- [x] Verify backend health check returns `{"status":"ok"}`.
+- [x] Create one Supabase Free project for PostgreSQL and Storage.
+- [x] Create private Supabase Storage buckets named `audio` and `covers`.
 - [x] Defer Resend until KIMS has a custom sending domain.
 - [x] Configure Sentry Developer plan for frontend and backend errors.
 - [ ] Configure Umami analytics for privacy-friendly product events.
-- [ ] Skip cron-job.org while the backend runs on Vercel Go Runtime.
+- [x] Skip cron-job.org while the backend runs on Vercel Go Runtime.
 - [ ] Verify all vendor limits again before launch.
 
 ## Step 3: Free-Tier Guardrails
