@@ -32,7 +32,7 @@ Planning date: 2026-06-18
 - [ ] Create a Vercel Go Runtime project for the Go backend.
 - [ ] Create one Supabase Free project for PostgreSQL and Storage.
 - [ ] Create private Supabase Storage buckets named `audio` and `covers`.
-- [ ] Create a Resend Free account for auth emails.
+- [x] Defer Resend until KIMS has a custom sending domain.
 - [ ] Configure Sentry Developer plan for frontend and backend errors.
 - [ ] Configure Umami analytics for privacy-friendly product events.
 - [ ] Skip cron-job.org while the backend runs on Vercel Go Runtime.
@@ -57,7 +57,7 @@ Planning date: 2026-06-18
 - [ ] Add Sentry error reporting.
 - [ ] Implement custom JWT auth with `admin` and `creator` roles.
 - [ ] Store refresh tokens as hashed records and deliver them with HttpOnly Secure cookies.
-- [ ] Implement email verification and password reset using Resend.
+- [ ] Implement email verification and password reset after a custom email domain is available.
 - [ ] Implement public catalog APIs.
 - [ ] Implement creator APIs for favorites, history, and playlists.
 - [ ] Implement admin APIs for uploads, publishing, metadata edits, and archive/delete.

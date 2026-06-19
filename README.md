@@ -19,7 +19,7 @@ Status: Step 1 scaffold is in place with a Next.js web app, Go API skeleton, doc
 - Database: PostgreSQL via Supabase
 - File storage: Supabase Storage
 - Auth: custom JWT in Go
-- Email: Resend
+- Email: deferred until KIMS has a custom sending domain
 - Analytics: Umami
 - Monitoring: Sentry
 - CI/CD: GitHub and GitHub Actions
@@ -51,7 +51,7 @@ kims/
 
 ## Free-Tier Notes
 
-- Vercel Hobby/Go Runtime, Supabase Free, Resend Free, Sentry Developer, Umami, and GitHub Actions must be rechecked before launch because limits can change.
+- Vercel Hobby/Go Runtime, Supabase Free, Sentry Developer, Umami, and GitHub Actions must be rechecked before launch because limits can change.
 - Store compressed delivery audio only.
 - Keep MVP storage under about 900 MB.
 - Use signed URLs for Supabase Storage assets.

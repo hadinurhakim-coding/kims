@@ -12,7 +12,7 @@ Browser
   -> Supabase Storage private buckets
 
 External services:
-  Resend for email
+  email provider deferred until KIMS has a custom sending domain
   Umami for analytics
   Sentry for monitoring
   no backend keep-alive service required on Vercel
@@ -107,5 +107,5 @@ Recommended backend package groups:
 - Keep MVP catalog storage under about 900 MB.
 - Use compressed delivery audio only.
 - Avoid background workers that require paid infrastructure.
-- Keep email volume below Resend Free limits.
-- Recheck Vercel, Supabase, Resend, Sentry, Umami, and GitHub Actions limits before launch.
+- Defer transactional email until a custom sending domain is available.
+- Recheck Vercel, Supabase, Sentry, Umami, and GitHub Actions limits before launch.

@@ -81,7 +81,7 @@ Error responses should use:
 
 - [ ] `POST /v1/auth/register`
   - Creates a creator account.
-  - Sends verification email through Resend.
+  - Email delivery is deferred until KIMS has a custom sending domain.
 
 - [ ] `POST /v1/auth/login`
   - Returns access token.
@@ -101,7 +101,7 @@ Error responses should use:
   - Verifies creator email address.
 
 - [ ] `POST /v1/auth/forgot-password`
-  - Sends password reset email.
+  - Deferred until KIMS has a custom sending domain.
 
 - [ ] `POST /v1/auth/reset-password`
   - Resets password using a valid reset token.

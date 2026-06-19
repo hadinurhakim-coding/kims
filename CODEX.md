@@ -27,7 +27,7 @@ The first public screen should be the usable catalog, not a marketing-only landi
 - Database: Supabase PostgreSQL.
 - Storage: Supabase Storage with private `audio` and `covers` buckets.
 - Auth: custom JWT access tokens and hashed refresh tokens.
-- Email: Resend.
+- Email: deferred until KIMS has a custom sending domain.
 - Analytics: Umami.
 - Monitoring: Sentry.
 - Hosting: Vercel for web and Vercel Go Runtime for API.
