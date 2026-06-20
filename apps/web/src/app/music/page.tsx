@@ -1,65 +1,88 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { CatalogLayout } from "@/components/catalog/CatalogLayout";
 import { EmptySearch } from "@/components/catalog/EmptySearch";
 import { FilterChips } from "@/components/catalog/FilterChips";
-import { HeroSection } from "@/components/catalog/HeroSection";
-import { SkeletonHero } from "@/components/catalog/SkeletonHero";
-import { SkeletonTrackItem } from "@/components/catalog/SkeletonTrackItem";
+import { PageHeader } from "@/components/catalog/PageHeader";
+import {
+  SortControls,
+  type SortKey,
+  type SortOrder,
+} from "@/components/catalog/SortControls";
 import { TrackItem } from "@/components/catalog/TrackItem";
 import { AppShell } from "@/components/shell/AppShell";
 import { BottomPlayer } from "@/components/shell/BottomPlayer";
 import { RightPanel } from "@/components/shell/RightPanel";
 import { useFavorites } from "@/context/FavoritesContext";
-import {
-  featuredTrack as initialFeaturedTrack,
-  tracks as initialTracks,
-} from "@/data/tracks";
+import { tracks } from "@/data/tracks";
 import type { Track } from "@/data/tracks";
 
-export default function HomePage() {
+export default function MusicPage() {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [recentTracks, setRecentTracks] = useState<Track[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
+  const musicTracks = useMemo(
+    () => tracks.filter((track) => track.type === "Music"),
+    [],
+  );
 
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  const featuredTrack = {
-    ...initialFeaturedTrack,
-    isFavorite: isFavorite(initialFeaturedTrack.id),
-  };
+  const moodOptions = useMemo(
+    () => ["All", ...new Set(musicTracks.map((track) => track.mood))],
+    [musicTracks],
+  );
 
   const visibleTracks = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedFilter = activeFilter.toLowerCase();
+    const filteredTracks =
+      normalizedFilter === "all"
+        ? musicTracks
+        : musicTracks.filter(
+            (track) => track.mood.toLowerCase() === normalizedFilter,
+          );
 
-    return initialTracks.filter((track) => {
-      const matchesFilter =
-        activeFilter === "All" ||
-        track.type === activeFilter ||
-        track.licenseLabel === activeFilter ||
-        track.mood === activeFilter;
+    if (sortKey === "default") {
+      return sortOrder === "desc"
+        ? [...filteredTracks].reverse()
+        : filteredTracks;
+    }
 
-      const matchesSearch =
-        normalizedQuery === "" ||
-        track.title.toLowerCase().includes(normalizedQuery) ||
-        track.mood.toLowerCase().includes(normalizedQuery);
+    const sortedTracks = [...filteredTracks].sort((firstTrack, secondTrack) => {
+      if (sortKey === "duration") {
+        return (
+          parseDuration(firstTrack.duration) -
+          parseDuration(secondTrack.duration)
+        );
+      }
 
-      return matchesFilter && matchesSearch;
+      if (sortKey === "mood") {
+        return firstTrack.mood.localeCompare(secondTrack.mood);
+      }
+
+      return firstTrack.licenseLabel.localeCompare(secondTrack.licenseLabel);
     });
-  }, [activeFilter, searchQuery]);
 
-  const hasEmptySearch =
-    searchQuery.trim() !== "" && visibleTracks.length === 0;
+    return sortOrder === "desc" ? sortedTracks.reverse() : sortedTracks;
+  }, [activeFilter, musicTracks, sortKey, sortOrder]);
+
+  function parseDuration(duration: string) {
+    const [minutes, seconds] = duration.split(":").map(Number);
+
+    return minutes * 60 + seconds;
+  }
+
+  function handleSortChange(nextSortKey: SortKey, nextSortOrder: SortOrder) {
+    setSortKey(nextSortKey);
+    setSortOrder(nextSortOrder);
+    setActiveFilter("All");
+  }
 
   function addRecentTrack(trackToAdd: Track) {
     setRecentTracks((tracks) => [
@@ -69,12 +92,15 @@ export default function HomePage() {
   }
 
   function playTrack(track: Track) {
+    setSelectedTrack(track);
     setCurrentTrack(track);
     setIsPlaying(true);
     addRecentTrack(track);
   }
 
   function toggleTrackPreview(track: Track) {
+    setSelectedTrack(track);
+
     if (currentTrack?.id === track.id) {
       setIsPlaying((playing) => !playing);
       return;
@@ -117,36 +143,32 @@ export default function HomePage() {
     >
       <div
         className={[
-          "mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pt-6 md:px-6 lg:px-8",
+          "mx-auto w-full max-w-6xl px-4 pt-6 md:px-6 lg:px-8",
           currentTrack ? "pb-24" : "pb-6",
         ].join(" ")}
       >
-        {isLoading ? (
-          <SkeletonHero />
-        ) : (
-          <HeroSection
-            track={featuredTrack}
-            onPlay={playTrack}
-            onFavorite={(track) => toggleFavorite(track.id)}
-          />
-        )}
-
-        <FilterChips onChange={setActiveFilter} />
-
-        <section className="flex flex-col gap-4">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">
-            Top Hits
-          </h2>
-
+        <CatalogLayout
+          pageHeader={
+            <PageHeader
+              title="Music"
+              trackCount={visibleTracks.length}
+              actions={undefined}
+            />
+          }
+          filterChips={
+            <FilterChips
+              options={moodOptions}
+              value={activeFilter}
+              onChange={setActiveFilter}
+            />
+          }
+          sortControls={<SortControls onSortChange={handleSortChange} />}
+        >
           <div className="flex flex-col gap-2">
-            {isLoading ? (
-              Array.from({ length: 5 }, (_, index) => (
-                <SkeletonTrackItem key={index} />
-              ))
-            ) : hasEmptySearch ? (
+            {visibleTracks.length === 0 ? (
               <EmptySearch
-                query={searchQuery}
-                onClear={() => setSearchQuery("")}
+                query={activeFilter}
+                onClear={() => setActiveFilter("All")}
               />
             ) : (
               visibleTracks.map((track, index) => (
@@ -154,7 +176,7 @@ export default function HomePage() {
                   key={track.id}
                   track={{ ...track, isFavorite: isFavorite(track.id) }}
                   rank={index + 1}
-                  isSelected={currentTrack?.id === track.id}
+                  isSelected={selectedTrack?.id === track.id}
                   isPlaying={currentTrack?.id === track.id && isPlaying}
                   onSelect={playTrack}
                   onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
@@ -164,7 +186,7 @@ export default function HomePage() {
               ))
             )}
           </div>
-        </section>
+        </CatalogLayout>
       </div>
     </AppShell>
   );

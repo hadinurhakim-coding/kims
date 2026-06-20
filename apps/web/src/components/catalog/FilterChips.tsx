@@ -1,0 +1,77 @@
+"use client";
+
+import { useState } from "react";
+
+export interface FilterChipsProps {
+  options?: string[];
+  value?: string;
+  onChange?: (value: string) => void;
+  label?: string;
+}
+
+const defaultChips = [
+  "All",
+  "Lofi",
+  "Cinematic",
+  "SFX",
+  "Loop",
+  "No Attribution",
+  "Commercial Use",
+];
+
+export function FilterChips({
+  options,
+  value,
+  onChange,
+  label,
+}: FilterChipsProps) {
+  const [activeChip, setActiveChip] = useState("All");
+  const chips = options ?? defaultChips;
+  const isControlled = value !== undefined;
+  const selectedChip = value ?? activeChip;
+
+  function handleSelect(nextValue: string) {
+    if (!isControlled) {
+      setActiveChip(nextValue);
+    }
+
+    onChange?.(nextValue);
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {label ? (
+        <span className="text-xs font-medium text-[var(--color-text-muted)]">
+          {label}
+        </span>
+      ) : null}
+
+      <div
+        role="group"
+        aria-label="Filter tracks by category"
+        className="flex flex-wrap gap-2"
+      >
+        {chips.map((chip) => {
+          const isActive = chip === selectedChip;
+
+          return (
+            <button
+              key={chip}
+              type="button"
+              aria-pressed={isActive}
+              onClick={() => handleSelect(chip)}
+              className={[
+                "rounded-[var(--radius-full)] border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)]",
+                isActive
+                  ? "border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] text-[var(--color-surface)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_8%,var(--color-surface))]",
+              ].join(" ")}
+            >
+              {chip}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

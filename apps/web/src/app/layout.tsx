@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import Script from "next/script";
-import { AppShell } from "../components/shell/AppShell";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 
 const umamiScriptUrl = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL;
 const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export default function RootLayout({
   children,
@@ -17,9 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
-        <AppShell>{children}</AppShell>
+        <FavoritesProvider>{children}</FavoritesProvider>
         {umamiScriptUrl && umamiWebsiteId ? (
           <Script
             data-website-id={umamiWebsiteId}
