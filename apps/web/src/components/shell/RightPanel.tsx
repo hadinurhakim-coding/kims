@@ -1,7 +1,8 @@
 "use client";
 
+import { useAudio } from "@/context/AudioContext";
 import type { Track } from "@/data/tracks";
-import { ChevronRight, Music } from "lucide-react";
+import { ChevronRight, Music, Music2 } from "lucide-react";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
@@ -10,7 +11,14 @@ export interface RightPanelProps {
   onSelect?: (track: Track) => void;
 }
 
+const licenseBadgeClasses: Record<Track["licenseLabel"], string> = {
+  "No Attribution": "bg-[var(--color-accent-teal)]",
+  "Commercial Use": "bg-[var(--color-accent-primary)]",
+  "Attribution Required": "bg-[var(--color-text-muted)]",
+};
+
 export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
+  const { currentTrack, isPlaying } = useAudio();
   const [activeCategory, setActiveCategory] = useState("All");
   const availableCategories = useMemo(
     () => ["All", ...new Set(recentTracks.map((track) => track.type))],
@@ -24,13 +32,96 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
     effectiveActiveCategory === "All"
       ? recentTracks
       : recentTracks.filter((track) => track.type === effectiveActiveCategory);
+  const safeTracks = filteredTracks.filter(
+    (track, index, self) =>
+      index === self.findIndex((currentTrack) => currentTrack.id === track.id),
+  );
 
   return (
     <div
       aria-label="Recent listened panel"
-      className="h-full overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)] px-4 pb-5 pt-16"
+      className="h-full overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)] px-4 pb-5 pt-0 lg:pt-16"
     >
-      <div className="-mx-4 px-4 pb-0 pt-2">
+      {currentTrack ? (
+        <div className="-mx-4 overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden">
+            <Image
+              src={`https://picsum.photos/seed/${currentTrack.id}/400/225`}
+              alt={currentTrack.title}
+              fill
+              sizes="280px"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.58)_0%,transparent_60%)]" />
+
+            <div className="absolute right-3 top-3 flex items-center gap-2 rounded-[var(--radius-full)] bg-[color-mix(in_srgb,var(--color-text-primary)_46%,transparent)] px-2.5 py-1.5 text-[var(--color-surface)]">
+              <Music2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-[11px] font-semibold leading-none">
+                Now Playing
+              </span>
+              {isPlaying ? (
+                <span
+                  aria-label="Playing"
+                  className="flex h-3.5 items-end gap-0.5"
+                  role="img"
+                >
+                  <span
+                    className="bar-animate w-[2px] rounded-full bg-[var(--color-surface)]"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="bar-animate w-[2px] rounded-full bg-[var(--color-surface)]"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="bar-animate w-[2px] rounded-full bg-[var(--color-surface)]"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </span>
+              ) : null}
+            </div>
+
+            <div
+              className="absolute bottom-0 left-0 right-0 m-2 rounded-[18px] border border-[color-mix(in_srgb,var(--color-surface)_28%,transparent)] bg-[color-mix(in_srgb,var(--color-text-primary)_58%,transparent)] px-3 py-2.5 shadow-[var(--shadow-md)]"
+              style={{
+                backdropFilter: "blur(18px) saturate(150%)",
+                WebkitBackdropFilter: "blur(18px) saturate(150%)",
+              }}
+            >
+              <div className="flex items-end justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold leading-tight text-[var(--color-surface)]">
+                    {currentTrack.title}
+                  </div>
+                  <div className="mt-0.5 truncate text-[11px] text-[color-mix(in_srgb,var(--color-surface)_72%,transparent)]">
+                    {currentTrack.type} &middot; {currentTrack.mood}
+                  </div>
+                </div>
+                <span
+                  className={[
+                    "inline-flex max-w-[46%] shrink-0 justify-center rounded-[var(--radius-full)] px-2 py-1 text-[10px] font-bold leading-none text-[var(--color-surface)] shadow-[0_0_14px_color-mix(in_srgb,var(--color-accent-teal)_30%,transparent)]",
+                    licenseBadgeClasses[currentTrack.licenseLabel],
+                  ].join(" ")}
+                >
+                  <span className="truncate">{currentTrack.licenseLabel}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          aria-live="polite"
+          className="-mx-4 mb-4 flex min-h-[180px] flex-col items-center justify-center border-b border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-center shadow-[0_10px_18px_-18px_var(--color-text-primary)]"
+        >
+          <Music className="mb-3 h-12 w-12 text-[var(--color-text-muted)]" />
+          <p className="text-sm font-medium text-[var(--color-text-muted)]">
+            Select a track to see details
+          </p>
+        </div>
+      )}
+
+      <div className="-mx-4 mt-3 px-4 pb-0">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-[var(--color-text-primary)]">
@@ -86,7 +177,7 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
             No recent tracks yet
           </p>
         </div>
-      ) : filteredTracks.length === 0 ? (
+      ) : safeTracks.length === 0 ? (
         <div
           aria-live="polite"
           className="flex min-h-[320px] flex-col items-center justify-center text-center"
@@ -98,7 +189,7 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
         </div>
       ) : (
         <ul className="space-y-2">
-          {filteredTracks.map((track) => (
+          {safeTracks.map((track) => (
             <li key={track.id}>
               <button
                 type="button"

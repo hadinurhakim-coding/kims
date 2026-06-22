@@ -7,10 +7,14 @@ import { HeroSection } from "@/components/catalog/HeroSection";
 import { SkeletonHero } from "@/components/catalog/SkeletonHero";
 import { SkeletonTrackItem } from "@/components/catalog/SkeletonTrackItem";
 import { TrackItem } from "@/components/catalog/TrackItem";
+import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
 import { AppShell } from "@/components/shell/AppShell";
 import { BottomPlayer } from "@/components/shell/BottomPlayer";
 import { RightPanel } from "@/components/shell/RightPanel";
+import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useHistory } from "@/context/HistoryContext";
+import { usePlaylists } from "@/context/PlaylistContext";
 import {
   featuredTrack as initialFeaturedTrack,
   tracks as initialTracks,
@@ -19,12 +23,13 @@ import type { Track } from "@/data/tracks";
 
 export default function HomePage() {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { history } = useHistory();
+  const { createPlaylist } = usePlaylists();
+  const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const [recentTracks, setRecentTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -61,32 +66,41 @@ export default function HomePage() {
   const hasEmptySearch =
     searchQuery.trim() !== "" && visibleTracks.length === 0;
 
-  function addRecentTrack(trackToAdd: Track) {
-    setRecentTracks((tracks) => [
-      trackToAdd,
-      ...tracks.filter((track) => track.id !== trackToAdd.id),
-    ].slice(0, 10));
-  }
+  const recentTracks = useMemo(
+    () =>
+      history
+        .filter(
+          (entry, index, self) =>
+            index === self.findIndex((item) => item.trackId === entry.trackId),
+        )
+        .slice(0, 10)
+        .map((entry) =>
+          initialTracks.find((track) => track.id === entry.trackId),
+        )
+        .filter((track): track is Track => Boolean(track)),
+    [history],
+  );
 
-  function playTrack(track: Track) {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    addRecentTrack(track);
+  function handlePlayTrack(track: Track) {
+    playTrack(track);
   }
 
   function toggleTrackPreview(track: Track) {
     if (currentTrack?.id === track.id) {
-      setIsPlaying((playing) => !playing);
+      togglePlayPause();
       return;
     }
 
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    addRecentTrack(track);
+    handlePlayTrack(track);
   }
 
   function handleDownload(track: Track) {
     console.log("Download track", track);
+  }
+
+  function handleCreatePlaylist(name: string) {
+    createPlaylist(name);
+    setIsModalOpen(false);
   }
 
   return (
@@ -94,31 +108,18 @@ export default function HomePage() {
       searchQuery={searchQuery}
       onSearch={setSearchQuery}
       rightPanel={
-        <RightPanel recentTracks={recentTracks} onSelect={playTrack} />
+        <RightPanel recentTracks={recentTracks} onSelect={handlePlayTrack} />
       }
       bottomPlayer={
         currentTrack ? (
-          <BottomPlayer
-            track={{
-              ...currentTrack,
-              isFavorite: isFavorite(currentTrack.id),
-            }}
-            isPlaying={isPlaying}
-            isFavorite={isFavorite(currentTrack.id)}
-            onPlayPause={() => setIsPlaying((playing) => !playing)}
-            onNext={() => undefined}
-            onPrevious={() => undefined}
-            onShuffle={() => undefined}
-            onRepeat={() => undefined}
-            onFavorite={(track) => toggleFavorite(track.id)}
-          />
+          <BottomPlayer onFavorite={(track) => toggleFavorite(track.id)} />
         ) : null
       }
     >
       <div
         className={[
           "mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pt-6 md:px-6 lg:px-8",
-          currentTrack ? "pb-24" : "pb-6",
+          currentTrack ? "pb-36" : "pb-6",
         ].join(" ")}
       >
         {isLoading ? (
@@ -126,7 +127,7 @@ export default function HomePage() {
         ) : (
           <HeroSection
             track={featuredTrack}
-            onPlay={playTrack}
+            onPlay={handlePlayTrack}
             onFavorite={(track) => toggleFavorite(track.id)}
           />
         )}
@@ -156,16 +157,23 @@ export default function HomePage() {
                   rank={index + 1}
                   isSelected={currentTrack?.id === track.id}
                   isPlaying={currentTrack?.id === track.id && isPlaying}
-                  onSelect={playTrack}
+                  onSelect={handlePlayTrack}
                   onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
                   onPreview={toggleTrackPreview}
                   onDownload={handleDownload}
+                  onCreatePlaylist={() => setIsModalOpen(true)}
                 />
               ))
             )}
           </div>
         </section>
       </div>
+
+      <CreatePlaylistModal
+        isOpen={isModalOpen}
+        onConfirm={handleCreatePlaylist}
+        onCancel={() => setIsModalOpen(false)}
+      />
     </AppShell>
   );
 }

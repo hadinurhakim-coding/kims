@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useAudio } from "@/context/AudioContext";
 import { PageTransition } from "./PageTransition";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -20,6 +21,8 @@ export function AppShell({
   searchQuery,
   onSearch,
 }: AppShellProps) {
+  const { currentTrack } = useAudio();
+
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <a
@@ -56,7 +59,7 @@ export function AppShell({
         </aside>
       </div>
 
-      {bottomPlayer ? (
+      {currentTrack && bottomPlayer ? (
         <footer aria-label="Music player" className="relative">
           {bottomPlayer}
         </footer>
