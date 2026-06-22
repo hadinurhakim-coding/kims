@@ -5,6 +5,11 @@
 
 # Dependencies
 go/pkg/mod/
+node_modules/
+
+# Next.js
+.next/
+out/
 
 # Logs and temp files
 *.log
@@ -17,4 +22,3 @@ go/pkg/mod/
 # OS
 .DS_Store
 Thumbs.db
-node_modules/
