@@ -21,7 +21,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/midnight-loop/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "city-pulse",
@@ -32,7 +32,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/city-pulse/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "door-hit",
@@ -43,7 +43,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/door-hit/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "wide-horizon",
@@ -54,7 +54,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/wide-horizon/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "rainy-window",
@@ -65,7 +65,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/rainy-window/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "glitch-sweep",
@@ -76,7 +76,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/glitch-sweep/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "golden-hour",
@@ -87,7 +87,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/golden-hour/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "final-ascent",
@@ -98,7 +98,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/final-ascent/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "soft-keys",
@@ -109,7 +109,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/soft-keys/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "impact-rise",
@@ -120,7 +120,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/impact-rise/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "cinematic-boom",
@@ -132,7 +132,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/cinematic-boom/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "deep-space-bed",
@@ -144,7 +144,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/deep-space-bed/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "cloth-movement",
@@ -156,7 +156,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/cloth-movement/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "soft-confirm",
@@ -168,7 +168,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/soft-confirm/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "forest-drizzle",
@@ -180,7 +180,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/forest-drizzle/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "reverse-whoosh",
@@ -192,7 +192,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/reverse-whoosh/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "coffee-break",
@@ -204,7 +204,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/coffee-break/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "soft-sunbeam",
@@ -216,7 +216,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/soft-sunbeam/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "shadow-vinyl",
@@ -228,7 +228,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/shadow-vinyl/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "midnight-static",
@@ -240,7 +240,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/midnight-static/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "window-rain",
@@ -252,7 +252,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/window-rain/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "umbrella-walk",
@@ -264,7 +264,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/umbrella-walk/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "after-hours",
@@ -276,7 +276,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/after-hours/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "neon-desk",
@@ -288,7 +288,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/neon-desk/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "cloud-sketch",
@@ -300,7 +300,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/cloud-sketch/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "sleepy-orbit",
@@ -312,7 +312,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/sleepy-orbit/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "old-postcard",
@@ -324,7 +324,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/old-postcard/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "tape-memories",
@@ -336,7 +336,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/tape-memories/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "skyline-triumph",
@@ -348,7 +348,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/skyline-triumph/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "mountain-charge",
@@ -360,7 +360,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/mountain-charge/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "countdown-pulse",
@@ -372,7 +372,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/countdown-pulse/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "hidden-signal",
@@ -384,7 +384,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/hidden-signal/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "letters-home",
@@ -396,7 +396,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/letters-home/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "last-goodbye",
@@ -408,7 +408,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/last-goodbye/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "quiet-valley",
@@ -420,7 +420,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/quiet-valley/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "morning-harbor",
@@ -432,7 +432,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/morning-harbor/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "storm-crown",
@@ -444,7 +444,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/storm-crown/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "iron-curtain",
@@ -456,7 +456,7 @@ export const tracks: Track[] = [
     licenseLabel: "Commercial Use",
     cover: "https://picsum.photos/seed/iron-curtain/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "new-dawn",
@@ -468,7 +468,7 @@ export const tracks: Track[] = [
     licenseLabel: "No Attribution",
     cover: "https://picsum.photos/seed/new-dawn/80/80",
     isFavorite: false,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
   {
     id: "rise-above",
@@ -480,7 +480,7 @@ export const tracks: Track[] = [
     licenseLabel: "Attribution Required",
     cover: "https://picsum.photos/seed/rise-above/80/80",
     isFavorite: true,
-    audioSrc: "",
+    audioSrc: "/Mimpi_Dua_Seal.mp3",
   },
 ];
 
@@ -489,3 +489,4 @@ export const cinematicTracks: Track[] = tracks.filter(
   (track) => track.type === "Cinematic",
 );
 export const featuredCinematicTrack: Track = cinematicTracks[0];
+

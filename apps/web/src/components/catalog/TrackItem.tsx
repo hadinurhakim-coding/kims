@@ -1,8 +1,19 @@
 "use client";
 
-import { Download, Heart, Pause, Play } from "lucide-react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { usePathname } from "next/navigation";
+import {
+  Check,
+  Download,
+  Heart,
+  ListPlus,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+} from "lucide-react";
 import Image from "next/image";
-import type { MouseEvent } from "react";
+import { usePlaylists } from "@/context/PlaylistContext";
 import type { Track } from "../../data/tracks";
 
 export interface TrackItemProps {
@@ -14,6 +25,8 @@ export interface TrackItemProps {
   onFavorite?: (track: Track) => void;
   onPreview?: (track: Track) => void;
   onDownload?: (track: Track) => void;
+  onRemove?: (track: Track) => void;
+  onCreatePlaylist?: () => void;
 }
 
 const licenseBadgeClasses: Record<Track["licenseLabel"], string> = {
@@ -49,13 +62,69 @@ export function TrackItem({
   onFavorite,
   onPreview,
   onDownload,
+  onRemove,
+  onCreatePlaylist,
 }: TrackItemProps) {
+  const pathname = usePathname();
+  const {
+    playlists,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    isTrackInPlaylist,
+  } = usePlaylists();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    function handlePointerDown(event: globalThis.MouseEvent) {
+      if (
+        event.target instanceof Node &&
+        !dropdownRef.current?.contains(event.target)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDropdownOpen]);
+
   function handleAction(
     event: MouseEvent<HTMLButtonElement>,
     callback?: (track: Track) => void,
   ) {
     event.stopPropagation();
     callback?.(track);
+  }
+
+  function handlePlaylistToggle(playlistId: string) {
+    if (isTrackInPlaylist(playlistId, track.id)) {
+      removeTrackFromPlaylist(playlistId, track.id);
+      return;
+    }
+
+    addTrackToPlaylist(playlistId, track.id);
   }
 
   return (
@@ -165,6 +234,80 @@ export function TrackItem({
         >
           <Download className="h-4 w-4" />
         </button>
+        <div ref={dropdownRef} className="relative">
+          <button
+            type="button"
+            aria-label={`Add ${track.title} to playlist`}
+            aria-expanded={isDropdownOpen}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsDropdownOpen((isOpen) => !isOpen);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] hover:text-[var(--color-accent-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+          >
+            <ListPlus className="h-4 w-4" />
+          </button>
+
+          {isDropdownOpen ? (
+            <div className="absolute right-0 top-full z-20 mt-2 min-w-[200px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-md)]">
+              <div className="px-3 py-2 text-xs font-medium text-[var(--color-text-muted)]">
+                Add to playlist
+              </div>
+
+              {playlists.length > 0 ? (
+                <>
+                  <div className="h-px bg-[var(--color-border)]" />
+                  <div className="max-h-[200px] overflow-y-auto py-1">
+                    {playlists.map((playlist) => {
+                      const isAdded = isTrackInPlaylist(playlist.id, track.id);
+
+                      return (
+                        <button
+                          key={playlist.id}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handlePlaylistToggle(playlist.id);
+                          }}
+                          className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent-primary)]"
+                        >
+                          <span className="truncate">{playlist.name}</span>
+                          {isAdded ? (
+                            <Check className="h-4 w-4 shrink-0 text-[var(--color-accent-primary)]" />
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="h-px bg-[var(--color-border)]" />
+                </>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsDropdownOpen(false);
+                  onCreatePlaylist?.();
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm font-semibold text-[var(--color-accent-primary)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-accent-primary)]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Playlist</span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {onRemove ? (
+          <button
+            type="button"
+            aria-label={`Remove ${track.title} from playlist`}
+            onClick={(event) => handleAction(event, onRemove)}
+            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface))] hover:text-[var(--color-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { Bell, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { usePlaylists } from "@/context/PlaylistContext";
 
 export interface TopBarProps {
   searchQuery?: string;
@@ -14,7 +15,6 @@ const routeTitles: Record<string, string> = {
   "/sfx": "Sound Effects",
   "/lofi": "Lofi",
   "/cinematic": "Cinematic",
-  "/recent": "Recent",
   "/favorites": "Favorites",
   "/playlists": "Playlists",
   "/history": "History",
@@ -22,7 +22,19 @@ const routeTitles: Record<string, string> = {
 
 export function TopBar({ searchQuery = "", onSearch }: TopBarProps) {
   const pathname = usePathname();
-  const title = routeTitles[pathname] ?? "Discover";
+  const { playlists } = usePlaylists();
+  const playlistId = pathname.startsWith("/playlists/")
+    ? pathname.split("/")[2]
+    : null;
+  const playlist = playlistId
+    ? playlists.find((currentPlaylist) => currentPlaylist.id === playlistId)
+    : null;
+  const title =
+    pathname === "/playlists"
+      ? "Playlists"
+      : playlistId
+        ? playlist?.name ?? "Playlist"
+        : routeTitles[pathname] ?? "Discover";
 
   return (
     <div className="flex h-full items-center gap-4 px-4 md:px-6">

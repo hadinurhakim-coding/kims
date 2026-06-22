@@ -24,17 +24,21 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
 
-      if (stored) {
-        setFavoritedIds(new Set(JSON.parse(stored) as string[]));
+        if (stored) {
+          setFavoritedIds(new Set(JSON.parse(stored) as string[]));
+        }
+      } catch {
+        setFavoritedIds(new Set());
+      } finally {
+        setHasLoaded(true);
       }
-    } catch {
-      setFavoritedIds(new Set());
-    } finally {
-      setHasLoaded(true);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {

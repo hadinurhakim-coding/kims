@@ -1,0 +1,14 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build outputs
+bin/
+coverage.out
+
+# Local caches
+.cache/
+
+# Logs
+*.log
