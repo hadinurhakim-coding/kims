@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CatalogLayout } from "@/components/catalog/CatalogLayout";
 import { EmptySearch } from "@/components/catalog/EmptySearch";
 import { FilterChips } from "@/components/catalog/FilterChips";
@@ -63,10 +63,6 @@ export default function SfxPage() {
         .filter((track): track is Track => Boolean(track)),
     [history],
   );
-
-  useEffect(() => {
-    setActiveFilter("All");
-  }, [sfxTracks.length]);
 
   const visibleTracks = useMemo(() => {
     const baseTracks = tracks.filter((track) => track.type === "SFX");

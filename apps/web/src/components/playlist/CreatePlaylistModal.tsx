@@ -19,10 +19,7 @@ export function CreatePlaylistModal({
   const trimmedName = name.trim();
 
   useEffect(() => {
-    if (!isOpen) {
-      setName("");
-      return;
-    }
+    if (!isOpen) return;
 
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [isOpen]);
@@ -46,13 +43,25 @@ export function CreatePlaylistModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel, onConfirm, trimmedName]);
 
+  function handleCancel() {
+    setName("");
+    onCancel();
+  }
+
+  function handleConfirm() {
+    if (trimmedName === "") return;
+
+    onConfirm(trimmedName);
+    setName("");
+  }
+
   if (!isOpen) return null;
 
   return (
     <>
       <div
         aria-hidden="true"
-        onClick={onCancel}
+        onClick={handleCancel}
         className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.5)] backdrop-blur-[4px]"
       />
       <div
@@ -71,7 +80,7 @@ export function CreatePlaylistModal({
           <button
             type="button"
             aria-label="Close create playlist dialog"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           >
             <X className="h-4 w-4" />
@@ -98,7 +107,7 @@ export function CreatePlaylistModal({
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="rounded-[var(--radius-full)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           >
             Cancel
@@ -106,11 +115,7 @@ export function CreatePlaylistModal({
           <button
             type="button"
             disabled={trimmedName === ""}
-            onClick={() => {
-              if (trimmedName !== "") {
-                onConfirm(trimmedName);
-              }
-            }}
+            onClick={handleConfirm}
             className="rounded-[var(--radius-full)] bg-[var(--color-accent-primary)] px-4 py-2 text-sm font-semibold text-[var(--color-surface)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_88%,var(--color-text-primary))] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           >
             Create

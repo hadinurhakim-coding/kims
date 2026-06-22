@@ -76,7 +76,11 @@ export function TrackItem({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsDropdownOpen(false);
+    const timeoutId = window.setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [pathname]);
 
   useEffect(() => {

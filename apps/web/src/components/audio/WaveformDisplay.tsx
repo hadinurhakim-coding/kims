@@ -109,7 +109,7 @@ export function WaveformDisplay({ track }: WaveformDisplayProps) {
         // Ignore stop errors on unmount.
       }
     };
-  }, []);
+  }, [waveColor, waveformColor]);
 
   useEffect(() => {
     const waveSurfer = waveSurferRef.current;

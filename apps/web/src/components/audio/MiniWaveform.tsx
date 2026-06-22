@@ -116,7 +116,7 @@ export function MiniWaveform({ track }: MiniWaveformProps) {
         // Ignore stop errors on unmount.
       }
     };
-  }, []);
+  }, [progressColor, waveColor]);
 
   useEffect(() => {
     const waveSurfer = waveSurferRef.current;

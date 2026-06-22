@@ -35,17 +35,21 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
 
-      if (stored) {
-        setHistory((JSON.parse(stored) as HistoryEntry[]).slice(0, 200));
+        if (stored) {
+          setHistory((JSON.parse(stored) as HistoryEntry[]).slice(0, 200));
+        }
+      } catch {
+        setHistory([]);
+      } finally {
+        setHasLoaded(true);
       }
-    } catch {
-      setHistory([]);
-    } finally {
-      setHasLoaded(true);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Trash2 } from "lucide-react";
 import { CatalogLayout } from "@/components/catalog/CatalogLayout";
@@ -62,9 +62,9 @@ function getTimeBlock(isoDate: string): TimeBlock {
 export default function HistoryPage() {
   const { isChecking } = useAuthGuard();
   const router = useRouter();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { toggleFavorite } = useFavorites();
   const { history, clearHistory, removeFromHistory } = useHistory();
-  const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
+  const { currentTrack, isPlaying, playTrack } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -95,25 +95,23 @@ export default function HistoryPage() {
     ],
     [history],
   );
+  const selectedFilter =
+    activeFilter === "All" || availableTypes.includes(activeFilter)
+      ? activeFilter
+      : "All";
 
   const filteredEntries = useMemo(() => {
     const entries =
-      activeFilter === "All"
+      selectedFilter === "All"
         ? historyEntries
-        : historyEntries.filter((entry) => entry.track.type === activeFilter);
+        : historyEntries.filter((entry) => entry.track.type === selectedFilter);
 
     return [...entries].sort(
       (firstEntry, secondEntry) =>
         new Date(secondEntry.playedAt).getTime() -
         new Date(firstEntry.playedAt).getTime(),
     );
-  }, [activeFilter, historyEntries]);
-
-  useEffect(() => {
-    if (activeFilter !== "All" && !availableTypes.includes(activeFilter)) {
-      setActiveFilter("All");
-    }
-  }, [activeFilter, availableTypes, history.length]);
+  }, [selectedFilter, historyEntries]);
 
   const groupedEntries = useMemo(
     () =>
@@ -185,7 +183,7 @@ export default function HistoryPage() {
           filterChips={
             <FilterChips
               options={["All", ...availableTypes]}
-              value={activeFilter}
+              value={selectedFilter}
               onChange={setActiveFilter}
               label="Type"
             />
@@ -210,9 +208,9 @@ export default function HistoryPage() {
                 Explore Tracks
               </button>
             </div>
-          ) : filteredEntries.length === 0 && activeFilter !== "All" ? (
+          ) : filteredEntries.length === 0 && selectedFilter !== "All" ? (
             <EmptySearch
-              query={activeFilter}
+              query={selectedFilter}
               onClear={() => setActiveFilter("All")}
             />
           ) : (

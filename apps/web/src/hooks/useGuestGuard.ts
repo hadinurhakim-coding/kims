@@ -1,21 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 export function useGuestGuard() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, hasLoaded } = useAuth();
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (hasLoaded && isAuthenticated) {
       router.replace("/");
-    } else {
-      setIsChecking(false);
     }
-  }, [isAuthenticated, router]);
+  }, [hasLoaded, isAuthenticated, router]);
 
-  return { isAuthenticated, isChecking };
+  return { isAuthenticated, isChecking: !hasLoaded || isAuthenticated };
 }

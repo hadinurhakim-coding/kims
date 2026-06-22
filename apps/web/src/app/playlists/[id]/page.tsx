@@ -88,7 +88,7 @@ export default function PlaylistDetailPage() {
     });
 
     return sortOrder === "desc" ? sortedTracks.reverse() : sortedTracks;
-  }, [playlists, sortKey, sortOrder]);
+  }, [getPlaylistTracks, playlistId, playlists, sortKey, sortOrder]);
 
   const coverTracks = useMemo(() => {
     if (!playlist) return [];

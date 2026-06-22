@@ -13,19 +13,19 @@ type healthResponse struct {
 	Status string `json:"status"`
 }
 
-type API struct {
+type Router struct {
 	dbConn *pgxpool.Pool
 }
 
 func NewRouter(dbConn *pgxpool.Pool) http.Handler {
-	api := &API{dbConn: dbConn}
+	router := &Router{dbConn: dbConn}
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/healthz", handleHealth)
-	r.Get("/readyz", api.handleReady)
+	r.Get("/readyz", router.handleReady)
 
 	return r
 }
@@ -34,8 +34,8 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
 }
 
-func (a *API) handleReady(w http.ResponseWriter, r *http.Request) {
-	if err := a.dbConn.Ping(r.Context()); err != nil {
+func (rtr *Router) handleReady(w http.ResponseWriter, r *http.Request) {
+	if err := rtr.dbConn.Ping(r.Context()); err != nil {
 		writeJSON(
 			w,
 			http.StatusServiceUnavailable,

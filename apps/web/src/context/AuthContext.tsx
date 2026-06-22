@@ -12,6 +12,7 @@ import {
 
 export interface AuthContextValue {
   isAuthenticated: boolean;
+  hasLoaded: boolean;
   mockLogin: () => void;
   mockLogout: () => void;
 }
@@ -21,13 +22,20 @@ const storageKey = "kims-auth-mock";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      setIsAuthenticated(localStorage.getItem(storageKey) === "true");
-    } catch {
-      setIsAuthenticated(false);
-    }
+    const timeoutId = window.setTimeout(() => {
+      try {
+        setIsAuthenticated(localStorage.getItem(storageKey) === "true");
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setHasLoaded(true);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const mockLogin = useCallback(() => {
@@ -53,10 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       isAuthenticated,
+      hasLoaded,
       mockLogin,
       mockLogout,
     }),
-    [isAuthenticated, mockLogin, mockLogout],
+    [isAuthenticated, hasLoaded, mockLogin, mockLogout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

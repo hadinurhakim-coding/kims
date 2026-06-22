@@ -26,7 +26,12 @@ func main() {
 	}
 
 	ctx := context.Background()
-	dbConn, err := db.Open(ctx, os.Getenv("DATABASE_URL"))
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+
+	dbConn, err := db.Open(ctx, databaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to db: %v", err)
 	}

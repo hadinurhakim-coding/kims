@@ -37,17 +37,21 @@ export function PlaylistProvider({ children }: { children: ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
+    const timeoutId = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem(storageKey);
 
-      if (stored) {
-        setPlaylists(JSON.parse(stored) as Playlist[]);
+        if (stored) {
+          setPlaylists(JSON.parse(stored) as Playlist[]);
+        }
+      } catch {
+        setPlaylists([]);
+      } finally {
+        setHasLoaded(true);
       }
-    } catch {
-      setPlaylists([]);
-    } finally {
-      setHasLoaded(true);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {

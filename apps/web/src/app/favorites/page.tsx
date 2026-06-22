@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CatalogLayout } from "@/components/catalog/CatalogLayout";
 import { EmptySearch } from "@/components/catalog/EmptySearch";
 import { FilterChips } from "@/components/catalog/FilterChips";
@@ -62,13 +62,17 @@ export default function FavoritesPage() {
     () => [...new Set(favoritedTracks.map((track) => track.type as string))],
     [favoritedTracks],
   );
+  const selectedFilter =
+    activeFilter === "All" || availableTypes.includes(activeFilter)
+      ? activeFilter
+      : "All";
 
   const filteredTracks = useMemo(() => {
     const orderedIds = [...favoritedIds];
     const typeFilteredTracks =
-      activeFilter === "All"
+      selectedFilter === "All"
         ? favoritedTracks
-        : favoritedTracks.filter((track) => track.type === activeFilter);
+        : favoritedTracks.filter((track) => track.type === selectedFilter);
 
     const sortedTracks =
       sortKey === "default"
@@ -99,13 +103,7 @@ export default function FavoritesPage() {
           });
 
     return sortOrder === "desc" ? sortedTracks.reverse() : sortedTracks;
-  }, [favoritedIds, activeFilter, favoritedTracks, sortKey, sortOrder]);
-
-  useEffect(() => {
-    if (activeFilter !== "All" && !availableTypes.includes(activeFilter)) {
-      setActiveFilter("All");
-    }
-  }, [activeFilter, availableTypes, favoritedTracks.length]);
+  }, [favoritedIds, selectedFilter, favoritedTracks, sortKey, sortOrder]);
 
   function parseDuration(duration: string) {
     const [minutes, seconds] = duration.split(":").map(Number);
@@ -175,7 +173,7 @@ export default function FavoritesPage() {
           filterChips={
             <FilterChips
               options={["All", ...availableTypes]}
-              value={activeFilter}
+              value={selectedFilter}
               onChange={setActiveFilter}
               label="Type"
             />
