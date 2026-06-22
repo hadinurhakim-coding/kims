@@ -1,21 +1,21 @@
 ```
-# Go build artifacts
-*.o
-*.a
-*.so
-*.dylib
-*.dll
-*.exe
-
-# Go cache and modules
-go.mod
-go.sum
-!go.mod
-!go.sum
+# Environment
+.env
+.env.local
+*.env.*
 
 # Dependencies
-vendor/
+go/pkg/mod/
 
-# Binaries
-bin/
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
 ```
