@@ -16,12 +16,6 @@ const licenseBadgeClasses: Record<Track["licenseLabel"], string> = {
   "Attribution Required": "bg-[rgba(255,255,255,0.16)]",
 };
 
-function getHeroCover(src: string) {
-  const seed = src.match(/\/seed\/([^/]+)/)?.[1];
-
-  return seed ? `https://picsum.photos/seed/${seed}/1200/320` : src;
-}
-
 export function CinematicHero({
   track,
   onPlay,
@@ -30,7 +24,7 @@ export function CinematicHero({
   return (
     <section className="relative h-[320px] w-full overflow-hidden rounded-[var(--radius-lg)]">
       <Image
-        src={getHeroCover(track.cover)}
+        src="/placeholder-cover.png"
         alt=""
         fill
         sizes="(min-width: 1024px) 900px, 100vw"

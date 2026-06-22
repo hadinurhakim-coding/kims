@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             return (
               <div key={seed} className="relative">
                 <Image
-                  src={`https://picsum.photos/seed/${seed}/300/300`}
+                  src="/placeholder-cover.png"
                   alt=""
                   fill
                   sizes="15vw"

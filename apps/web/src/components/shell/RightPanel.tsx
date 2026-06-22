@@ -46,7 +46,7 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
         <div className="-mx-4 overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)]">
           <div className="relative aspect-[16/10] w-full overflow-hidden">
             <Image
-              src={`https://picsum.photos/seed/${currentTrack.id}/400/225`}
+              src="/placeholder-cover.png"
               alt={currentTrack.title}
               fill
               sizes="280px"

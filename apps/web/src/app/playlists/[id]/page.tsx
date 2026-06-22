@@ -261,7 +261,7 @@ export default function PlaylistDetailPage() {
                       return track ? (
                         <Image
                           key={track.id}
-                          src={`https://picsum.photos/seed/${track.id}/120/120`}
+                          src="/placeholder-cover.png"
                           alt=""
                           width={120}
                           height={120}

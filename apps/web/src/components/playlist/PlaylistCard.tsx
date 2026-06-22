@@ -54,7 +54,7 @@ export function PlaylistCard({
                 return track ? (
                   <Image
                     key={track.id}
-                    src={`https://picsum.photos/seed/${track.id}/80/80`}
+                    src="/placeholder-cover.png"
                     alt=""
                     width={80}
                     height={80}
