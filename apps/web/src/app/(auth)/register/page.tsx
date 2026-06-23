@@ -8,7 +8,9 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { validate } from "@/lib/validation";
 
@@ -60,6 +62,8 @@ function FieldError({ id, message }: { id: string; message: string }) {
 
 export default function RegisterPage() {
   const { isChecking } = useGuestGuard();
+  const router = useRouter();
+  const { register } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -104,7 +108,7 @@ export default function RegisterPage() {
     return touched[field] && validations[field].valid;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setHasSubmitted(true);
     setTouched({
       name: true,
@@ -118,10 +122,14 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    window.setTimeout(() => {
+    try {
+      await register({ name, email, password });
+      router.replace("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to register.");
+    } finally {
       setIsLoading(false);
-      setError("Registration not yet implemented.");
-    }, 1000);
+    }
   }
 
   if (isChecking) return null;

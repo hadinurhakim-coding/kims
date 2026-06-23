@@ -37,7 +37,7 @@ function FieldError({ id, message }: { id: string; message: string }) {
 export default function LoginPage() {
   const { isChecking } = useGuestGuard();
   const router = useRouter();
-  const { mockLogin } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +60,7 @@ export default function LoginPage() {
     setTouched((current) => ({ ...current, [field]: true }));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setHasSubmitted(true);
     setTouched({ email: true, password: true });
     setError(null);
@@ -69,11 +69,14 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    window.setTimeout(() => {
-      setIsLoading(false);
-      mockLogin();
+    try {
+      await login({ email, password });
       router.replace("/");
-    }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to sign in.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   if (isChecking) return null;

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/middleware"
 )
 
 type Handler struct {
@@ -112,13 +114,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func userIDFromContext(r *http.Request) (string, bool) {
-	for _, key := range []any{"user_id", "userID"} {
-		if userID, ok := r.Context().Value(key).(string); ok && userID != "" {
-			return userID, true
-		}
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok || userID == "" {
+		return "", false
 	}
 
-	return "", false
+	return userID, true
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

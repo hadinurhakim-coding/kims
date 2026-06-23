@@ -5,8 +5,15 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/auth"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/favorites"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/history"
+	appmiddleware "github.com/hadinurhakim-coding/kims/apps/api/internal/middleware"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/playlists"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/tracks"
 )
 
 type healthResponse struct {
@@ -21,13 +28,53 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 	router := &Router{dbConn: dbConn}
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
 
 	r.Get("/healthz", handleHealth)
 	r.Get("/readyz", router.handleReady)
+	router.registerAPIRoutes(r)
 
 	return r
+}
+
+func (rtr *Router) registerAPIRoutes(r chi.Router) {
+	authHandler := auth.NewHandler(auth.NewService(auth.NewRepository(rtr.dbConn)))
+	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn)))
+	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn)))
+	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn)))
+	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn)))
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Post("/auth/register", authHandler.Register)
+		r.Post("/auth/login", authHandler.Login)
+		r.Post("/auth/refresh", authHandler.Refresh)
+
+		r.Get("/tracks", tracksHandler.List)
+		r.Get("/tracks/{id}", tracksHandler.GetByID)
+
+		r.Group(func(r chi.Router) {
+			r.Use(appmiddleware.RequireAuth)
+
+			r.Post("/auth/logout", authHandler.Logout)
+
+			r.Get("/favorites", favoritesHandler.List)
+			r.Post("/favorites", favoritesHandler.Add)
+			r.Delete("/favorites/{trackID}", favoritesHandler.Remove)
+
+			r.Get("/playlists", playlistsHandler.List)
+			r.Post("/playlists", playlistsHandler.Create)
+			r.Get("/playlists/{id}", playlistsHandler.GetByID)
+			r.Delete("/playlists/{id}", playlistsHandler.Delete)
+			r.Post("/playlists/{id}/tracks", playlistsHandler.AddTrack)
+			r.Delete("/playlists/{id}/tracks/{trackID}", playlistsHandler.RemoveTrack)
+
+			r.Get("/history", historyHandler.List)
+			r.Post("/history", historyHandler.Record)
+			r.Delete("/history", historyHandler.Clear)
+			r.Delete("/history/{entryID}", historyHandler.Remove)
+		})
+	})
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {

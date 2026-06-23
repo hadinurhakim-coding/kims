@@ -58,7 +58,7 @@ const sections: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, mockLogout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const { favoritedIds } = useFavorites();
   const { history } = useHistory();
   const { playlists } = usePlaylists();
@@ -180,10 +180,10 @@ export function Sidebar() {
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-[var(--color-text-primary)]">
-                    Kim
+                    {user?.name ?? "KIMS User"}
                   </span>
                   <span className="block truncate text-xs text-[var(--color-text-muted)]">
-                    kim@example.com
+                    {user?.email ?? "Signed in"}
                   </span>
                 </span>
               </div>
@@ -217,8 +217,8 @@ export function Sidebar() {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    mockLogout();
+                  onClick={async () => {
+                    await logout();
                     setIsDropdownOpen(false);
                     router.push("/login");
                   }}
