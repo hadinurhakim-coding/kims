@@ -9,6 +9,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  apiRequest,
+  type APIHistoryListResponse,
+} from "@/lib/api";
 
 export interface HistoryEntry {
   id: string;
@@ -19,101 +24,110 @@ export interface HistoryEntry {
 
 export interface HistoryContextValue {
   history: HistoryEntry[];
-  recordPlay: (trackId: string) => void;
-  clearHistory: () => void;
-  removeFromHistory: (entryId: string) => void;
+  recordPlay: (trackId: string) => Promise<void>;
+  clearHistory: () => Promise<void>;
+  removeFromHistory: (entryId: string) => Promise<void>;
   getTrackHistory: (trackId: string) => HistoryEntry[];
 }
 
 const HistoryContext = createContext<HistoryContextValue | null>(null);
-const storageKey = "kims-history";
-const recentPlayWindowMs = 1_800_000;
-const maxHistoryEntries = 200;
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, hasLoaded: authHasLoaded } = useAuth();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      try {
-        const stored = localStorage.getItem(storageKey);
+    let isMounted = true;
 
-        if (stored) {
-          setHistory((JSON.parse(stored) as HistoryEntry[]).slice(0, 200));
+    async function loadHistory() {
+      if (!authHasLoaded) return;
+      if (!isAuthenticated) {
+        setHistory([]);
+        return;
+      }
+
+      try {
+        const response = await apiRequest<APIHistoryListResponse>(
+          "/history?limit=200&offset=0",
+        );
+
+        if (isMounted) {
+          setHistory(
+            response.history.map((entry) => ({
+              id: entry.entry_id,
+              trackId: entry.id,
+              playedAt: entry.played_at,
+              playCount: entry.play_count,
+            })),
+          );
         }
       } catch {
-        setHistory([]);
-      } finally {
-        setHasLoaded(true);
+        if (isMounted) {
+          setHistory([]);
+        }
       }
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    if (!hasLoaded) return;
-
-    try {
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify(history.slice(0, maxHistoryEntries)),
-      );
-    } catch {
-      // Ignore unavailable storage.
     }
-  }, [history, hasLoaded]);
 
-  const recordPlay = useCallback((trackId: string) => {
-    setHistory((currentHistory) => {
-      const now = Date.now();
-      const playedAt = new Date(now).toISOString();
-      const recent = currentHistory.find(
-        (entry) =>
-          entry.trackId === trackId &&
-          now - new Date(entry.playedAt).getTime() < recentPlayWindowMs,
-      );
+    void loadHistory();
 
-      if (recent) {
-        return currentHistory
-          .map((entry) =>
-            entry.id === recent.id
-              ? {
-                  ...entry,
-                  playedAt,
-                  playCount: entry.playCount + 1,
-                }
-              : entry,
-          )
-          .slice(0, maxHistoryEntries);
-      }
+    return () => {
+      isMounted = false;
+    };
+  }, [authHasLoaded, isAuthenticated]);
 
-      return [
-        {
-          id: crypto.randomUUID(),
-          trackId,
-          playedAt,
-          playCount: 1,
-        },
-        ...currentHistory,
-      ].slice(0, maxHistoryEntries);
-    });
-  }, []);
+  const refreshHistory = useCallback(async () => {
+    const response = await apiRequest<APIHistoryListResponse>(
+      "/history?limit=200&offset=0",
+    );
 
-  const clearHistory = useCallback(() => {
-    setHistory([]);
-  }, []);
-
-  const removeFromHistory = useCallback((entryId: string) => {
-    setHistory((currentHistory) =>
-      currentHistory.filter((entry) => entry.id !== entryId),
+    setHistory(
+      response.history.map((entry) => ({
+        id: entry.entry_id,
+        trackId: entry.id,
+        playedAt: entry.played_at,
+        playCount: entry.play_count,
+      })),
     );
   }, []);
 
+  const recordPlay = useCallback(
+    async (trackId: string) => {
+      if (!isAuthenticated) return;
+
+      await apiRequest("/history", {
+        method: "POST",
+        body: JSON.stringify({ track_id: trackId }),
+      });
+      await refreshHistory();
+    },
+    [isAuthenticated, refreshHistory],
+  );
+
+  const clearHistory = useCallback(async () => {
+    setHistory([]);
+
+    try {
+      await apiRequest("/history", { method: "DELETE" });
+    } catch {
+      await refreshHistory();
+    }
+  }, [refreshHistory]);
+
+  const removeFromHistory = useCallback(async (entryId: string) => {
+    const previousHistory = history;
+    setHistory((currentHistory) =>
+      currentHistory.filter((entry) => entry.id !== entryId),
+    );
+
+    try {
+      await apiRequest(`/history/${entryId}`, { method: "DELETE" });
+    } catch {
+      setHistory(previousHistory);
+    }
+  }, [history]);
+
   const getTrackHistory = useCallback(
-    (trackId: string) =>
-      history.filter((entry) => entry.trackId === trackId),
+    (trackId: string) => history.filter((entry) => entry.trackId === trackId),
     [history],
   );
 

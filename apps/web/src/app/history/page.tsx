@@ -14,8 +14,8 @@ import { RightPanel } from "@/components/shell/RightPanel";
 import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory, type HistoryEntry } from "@/context/HistoryContext";
+import { useTracks } from "@/context/TracksContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { tracks } from "@/data/tracks";
 import type { Track } from "@/data/tracks";
 
 type TimeBlock =
@@ -64,6 +64,7 @@ export default function HistoryPage() {
   const router = useRouter();
   const { toggleFavorite } = useFavorites();
   const { history, clearHistory, removeFromHistory } = useHistory();
+  const { tracks } = useTracks();
   const { currentTrack, isPlaying, playTrack } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,7 +80,7 @@ export default function HistoryPage() {
           return track ? { ...entry, track } : null;
         })
         .filter((entry): entry is HistoryEntryWithTrack => Boolean(entry)),
-    [history],
+    [history, tracks],
   );
 
   const availableTypes = useMemo(
@@ -93,7 +94,7 @@ export default function HistoryPage() {
           .map((track) => track.type as string),
       ),
     ],
-    [history],
+    [history, tracks],
   );
   const selectedFilter =
     activeFilter === "All" || availableTypes.includes(activeFilter)
@@ -138,7 +139,7 @@ export default function HistoryPage() {
   function handleClearHistory() {
     if (!confirm("Clear all history? This cannot be undone.")) return;
 
-    clearHistory();
+    void clearHistory();
   }
 
   if (isChecking) return null;

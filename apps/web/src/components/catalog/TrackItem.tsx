@@ -120,11 +120,11 @@ export function TrackItem({
 
   function handlePlaylistToggle(playlistId: string) {
     if (isTrackInPlaylist(playlistId, track.id)) {
-      removeTrackFromPlaylist(playlistId, track.id);
+      void removeTrackFromPlaylist(playlistId, track.id);
       return;
     }
 
-    addTrackToPlaylist(playlistId, track.id);
+    void addTrackToPlaylist(playlistId, track.id);
   }
 
   return (

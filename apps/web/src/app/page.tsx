@@ -15,16 +15,14 @@ import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
 import { usePlaylists } from "@/context/PlaylistContext";
-import {
-  featuredTrack as initialFeaturedTrack,
-  tracks as initialTracks,
-} from "@/data/tracks";
+import { useTracks } from "@/context/TracksContext";
 import type { Track } from "@/data/tracks";
 
 export default function HomePage() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
   const { createPlaylist } = usePlaylists();
+  const { tracks, featuredTrack: initialFeaturedTrack, hasLoaded } = useTracks();
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
@@ -39,15 +37,17 @@ export default function HomePage() {
     return () => window.clearTimeout(timeoutId);
   }, []);
 
-  const featuredTrack = {
-    ...initialFeaturedTrack,
-    isFavorite: isFavorite(initialFeaturedTrack.id),
-  };
+  const featuredTrack = initialFeaturedTrack
+    ? {
+        ...initialFeaturedTrack,
+        isFavorite: isFavorite(initialFeaturedTrack.id),
+      }
+    : null;
 
   const visibleTracks = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return initialTracks.filter((track) => {
+    return tracks.filter((track) => {
       const matchesFilter =
         activeFilter === "All" ||
         track.type === activeFilter ||
@@ -61,7 +61,7 @@ export default function HomePage() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, searchQuery]);
+  }, [activeFilter, searchQuery, tracks]);
 
   const hasEmptySearch =
     searchQuery.trim() !== "" && visibleTracks.length === 0;
@@ -75,10 +75,10 @@ export default function HomePage() {
         )
         .slice(0, 10)
         .map((entry) =>
-          initialTracks.find((track) => track.id === entry.trackId),
+          tracks.find((track) => track.id === entry.trackId),
         )
         .filter((track): track is Track => Boolean(track)),
-    [history],
+    [history, tracks],
   );
 
   function handlePlayTrack(track: Track) {
@@ -98,8 +98,8 @@ export default function HomePage() {
     console.log("Download track", track);
   }
 
-  function handleCreatePlaylist(name: string) {
-    createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    await createPlaylist(name);
     setIsModalOpen(false);
   }
 
@@ -122,7 +122,7 @@ export default function HomePage() {
           currentTrack ? "pb-36" : "pb-6",
         ].join(" ")}
       >
-        {isLoading ? (
+        {isLoading || !hasLoaded || !featuredTrack ? (
           <SkeletonHero />
         ) : (
           <HeroSection
