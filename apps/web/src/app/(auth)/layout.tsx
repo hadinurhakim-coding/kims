@@ -23,6 +23,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                   alt=""
                   fill
                   sizes="15vw"
+                  loading={index === 0 ? "eager" : undefined}
+                  priority={index === 0}
                   className="object-cover"
                 />
               </div>

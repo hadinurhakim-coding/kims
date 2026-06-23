@@ -28,6 +28,7 @@ export function CinematicHero({
         alt=""
         fill
         sizes="(min-width: 1024px) 900px, 100vw"
+        loading="eager"
         className="absolute inset-0 object-cover"
         priority
       />

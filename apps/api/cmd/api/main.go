@@ -31,6 +31,11 @@ func main() {
 		log.Fatal("DATABASE_URL is required")
 	}
 
+	if err := db.RunMigrations(databaseURL); err != nil {
+		log.Fatalf("migrations failed: %v", err)
+	}
+	log.Printf("migrations applied successfully")
+
 	dbConn, err := db.Open(ctx, databaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to db: %v", err)

@@ -77,6 +77,8 @@ export function HeroSection({
         alt=""
         width={200}
         height={200}
+        loading="eager"
+        priority
         className="order-1 h-[200px] w-[200px] shrink-0 rounded-[var(--radius-lg)] object-cover md:order-2"
       />
     </section>
