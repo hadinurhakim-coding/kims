@@ -19,13 +19,14 @@ import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
 import { usePlaylists } from "@/context/PlaylistContext";
-import { tracks } from "@/data/tracks";
+import { useTracks } from "@/context/TracksContext";
 import type { Track } from "@/data/tracks";
 
 export default function MusicPage() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
   const { createPlaylist } = usePlaylists();
+  const { tracks } = useTracks();
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
@@ -36,7 +37,7 @@ export default function MusicPage() {
 
   const musicTracks = useMemo(
     () => tracks.filter((track) => track.type === "Music"),
-    [],
+    [tracks],
   );
 
   const moodOptions = useMemo(
@@ -54,7 +55,7 @@ export default function MusicPage() {
         .slice(0, 10)
         .map((entry) => tracks.find((track) => track.id === entry.trackId))
         .filter((track): track is Track => Boolean(track)),
-    [history],
+    [history, tracks],
   );
 
   const visibleTracks = useMemo(() => {
@@ -122,8 +123,8 @@ export default function MusicPage() {
     console.log("Download track", track);
   }
 
-  function handleCreatePlaylist(name: string) {
-    createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    await createPlaylist(name);
     setIsModalOpen(false);
   }
 

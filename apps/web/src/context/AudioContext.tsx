@@ -104,7 +104,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setDuration(0);
     setCurrentTime(0);
     void waveSurfer.load(track.audioSrc).then(() => {
-      recordPlay(track.id);
+      void recordPlay(track.id);
     });
   }, [recordPlay]);
 

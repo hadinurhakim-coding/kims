@@ -20,8 +20,8 @@ import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
 import { usePlaylists } from "@/context/PlaylistContext";
+import { useTracks } from "@/context/TracksContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { tracks } from "@/data/tracks";
 import type { Track } from "@/data/tracks";
 
 function parseDuration(duration: string) {
@@ -44,6 +44,7 @@ export default function PlaylistDetailPage() {
   } = usePlaylists();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
+  const { tracks } = useTracks();
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,11 +94,8 @@ export default function PlaylistDetailPage() {
   const coverTracks = useMemo(() => {
     if (!playlist) return [];
 
-    return playlist.trackIds
-      .slice(0, 4)
-      .map((trackId) => tracks.find((track) => track.id === trackId))
-      .filter((track): track is Track => Boolean(track));
-  }, [playlist]);
+    return getPlaylistTracks(playlist.id).slice(0, 4);
+  }, [getPlaylistTracks, playlist]);
 
   const recentTracks = useMemo(
     () =>
@@ -109,7 +107,7 @@ export default function PlaylistDetailPage() {
         .slice(0, 10)
         .map((entry) => tracks.find((track) => track.id === entry.trackId))
         .filter((track): track is Track => Boolean(track)),
-    [history],
+    [history, tracks],
   );
 
   function handleSortChange(nextSortKey: SortKey, nextSortOrder: SortOrder) {
@@ -147,25 +145,25 @@ export default function PlaylistDetailPage() {
     handlePlayTrack(shuffledTracks[0]);
   }
 
-  function handleDeletePlaylist() {
+  async function handleDeletePlaylist() {
     if (!playlist) return;
 
-    deletePlaylist(playlist.id);
+    await deletePlaylist(playlist.id);
     router.push("/playlists");
   }
 
-  function handleRemoveTrack(track: Track) {
+  async function handleRemoveTrack(track: Track) {
     if (!playlist) return;
 
-    removeTrackFromPlaylist(playlist.id, track.id);
+    await removeTrackFromPlaylist(playlist.id, track.id);
   }
 
   function handleDownload(track: Track) {
     console.log("Download track", track);
   }
 
-  function handleCreatePlaylist(name: string) {
-    createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    await createPlaylist(name);
     setIsModalOpen(false);
   }
 

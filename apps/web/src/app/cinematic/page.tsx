@@ -20,16 +20,17 @@ import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
 import { usePlaylists } from "@/context/PlaylistContext";
-import {
-  featuredCinematicTrack,
-  tracks,
-} from "@/data/tracks";
+import { useTracks } from "@/context/TracksContext";
 import type { Track } from "@/data/tracks";
 
 export default function CinematicPage() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
   const { createPlaylist } = usePlaylists();
+  const {
+    tracks,
+    featuredCinematicTrack,
+  } = useTracks();
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
@@ -40,7 +41,7 @@ export default function CinematicPage() {
 
   const cinematicTracks = useMemo(
     () => tracks.filter((track) => track.type === "Cinematic"),
-    [],
+    [tracks],
   );
 
   const recentTracks = useMemo(
@@ -53,7 +54,7 @@ export default function CinematicPage() {
         .slice(0, 10)
         .map((entry) => tracks.find((track) => track.id === entry.trackId))
         .filter((track): track is Track => Boolean(track)),
-    [history],
+    [history, tracks],
   );
 
   const moods = useMemo(
@@ -61,10 +62,12 @@ export default function CinematicPage() {
     [cinematicTracks],
   );
 
-  const featuredTrack = {
-    ...featuredCinematicTrack,
-    isFavorite: isFavorite(featuredCinematicTrack.id),
-  };
+  const featuredTrack = featuredCinematicTrack
+    ? {
+        ...featuredCinematicTrack,
+        isFavorite: isFavorite(featuredCinematicTrack.id),
+      }
+    : null;
 
   const filteredTracks = useMemo(() => {
     const baseTracks = tracks.filter((track) => track.type === "Cinematic");
@@ -98,7 +101,7 @@ export default function CinematicPage() {
           });
 
     return sortOrder === "desc" ? sortedTracks.reverse() : sortedTracks;
-  }, [activeFilter, sortKey, sortOrder]);
+  }, [activeFilter, sortKey, sortOrder, tracks]);
 
   const sectionLabel =
     activeFilter === "All"
@@ -136,8 +139,8 @@ export default function CinematicPage() {
     console.log("Download track", track);
   }
 
-  function handleCreatePlaylist(name: string) {
-    createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    await createPlaylist(name);
     setIsModalOpen(false);
   }
 
@@ -184,11 +187,13 @@ export default function CinematicPage() {
           }
         >
           <div className="flex flex-col gap-6">
-            <CinematicHero
-              track={featuredTrack}
-              onPlay={() => handlePlayTrack(featuredTrack)}
-              onFavorite={(track) => toggleFavorite(track.id)}
-            />
+            {featuredTrack ? (
+              <CinematicHero
+                track={featuredTrack}
+                onPlay={() => handlePlayTrack(featuredTrack)}
+                onFavorite={(track) => toggleFavorite(track.id)}
+              />
+            ) : null}
 
             <section className="flex flex-col gap-4">
               <h2 className="text-xl font-bold text-[var(--color-text-primary)]">

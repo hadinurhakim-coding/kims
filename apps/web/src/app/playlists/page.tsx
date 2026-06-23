@@ -10,25 +10,26 @@ import { PlaylistCard } from "@/components/playlist/PlaylistCard";
 import { AppShell } from "@/components/shell/AppShell";
 import { RightPanel } from "@/components/shell/RightPanel";
 import { usePlaylists } from "@/context/PlaylistContext";
+import { useTracks } from "@/context/TracksContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { tracks } from "@/data/tracks";
 
 export default function PlaylistsPage() {
   const { isChecking } = useAuthGuard();
   const router = useRouter();
   const { playlists, createPlaylist, deletePlaylist } = usePlaylists();
+  const { tracks } = useTracks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  function handleCreatePlaylist(name: string) {
-    const playlist = createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    const playlist = await createPlaylist(name);
 
     setIsModalOpen(false);
     router.push(`/playlists/${playlist.id}`);
   }
 
-  function handleDeletePlaylist(id: string) {
-    deletePlaylist(id);
+  async function handleDeletePlaylist(id: string) {
+    await deletePlaylist(id);
   }
 
   if (isChecking) return null;

@@ -9,49 +9,60 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  apiRequest,
+  type APIFavoriteListResponse,
+} from "@/lib/api";
 
 export interface FavoritesContextValue {
   favoritedIds: Set<string>;
-  toggleFavorite: (id: string) => void;
+  toggleFavorite: (id: string) => Promise<void>;
   isFavorite: (id: string) => boolean;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
-const storageKey = "kims-favorites";
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, hasLoaded: authHasLoaded } = useAuth();
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      try {
-        const stored = localStorage.getItem(storageKey);
+    let isMounted = true;
 
-        if (stored) {
-          setFavoritedIds(new Set(JSON.parse(stored) as string[]));
+    async function loadFavorites() {
+      if (!authHasLoaded) return;
+      if (!isAuthenticated) {
+        setFavoritedIds(new Set());
+        return;
+      }
+
+      try {
+        const response =
+          await apiRequest<APIFavoriteListResponse>("/favorites");
+
+        if (isMounted) {
+          setFavoritedIds(
+            new Set(response.favorites.map((track) => track.id)),
+          );
         }
       } catch {
-        setFavoritedIds(new Set());
-      } finally {
-        setHasLoaded(true);
+        if (isMounted) {
+          setFavoritedIds(new Set());
+        }
       }
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    if (!hasLoaded) return;
-
-    try {
-      localStorage.setItem(storageKey, JSON.stringify([...favoritedIds]));
-    } catch {
-      // Ignore unavailable storage.
     }
-  }, [favoritedIds, hasLoaded]);
 
-  const toggleFavorite = useCallback((id: string) => {
+    void loadFavorites();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authHasLoaded, isAuthenticated]);
+
+  const toggleFavorite = useCallback(async (id: string) => {
+    let shouldAdd = false;
+
     setFavoritedIds((currentIds) => {
       const nextIds = new Set(currentIds);
 
@@ -59,10 +70,34 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         nextIds.delete(id);
       } else {
         nextIds.add(id);
+        shouldAdd = true;
       }
 
       return nextIds;
     });
+
+    try {
+      if (shouldAdd) {
+        await apiRequest("/favorites", {
+          method: "POST",
+          body: JSON.stringify({ track_id: id }),
+        });
+      } else {
+        await apiRequest(`/favorites/${id}`, { method: "DELETE" });
+      }
+    } catch {
+      setFavoritedIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+
+        if (shouldAdd) {
+          nextIds.delete(id);
+        } else {
+          nextIds.add(id);
+        }
+
+        return nextIds;
+      });
+    }
   }, []);
 
   const isFavorite = useCallback(

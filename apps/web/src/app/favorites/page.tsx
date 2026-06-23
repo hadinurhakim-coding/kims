@@ -20,8 +20,8 @@ import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
 import { usePlaylists } from "@/context/PlaylistContext";
+import { useTracks } from "@/context/TracksContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { tracks } from "@/data/tracks";
 import type { Track } from "@/data/tracks";
 
 export default function FavoritesPage() {
@@ -29,6 +29,7 @@ export default function FavoritesPage() {
   const { favoritedIds, isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
   const { createPlaylist } = usePlaylists();
+  const { tracks } = useTracks();
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
@@ -42,7 +43,7 @@ export default function FavoritesPage() {
       [...favoritedIds]
         .map((id) => tracks.find((track) => track.id === id))
         .filter((track): track is Track => Boolean(track)),
-    [favoritedIds],
+    [favoritedIds, tracks],
   );
 
   const recentTracks = useMemo(
@@ -55,7 +56,7 @@ export default function FavoritesPage() {
         .slice(0, 10)
         .map((entry) => tracks.find((track) => track.id === entry.trackId))
         .filter((track): track is Track => Boolean(track)),
-    [history],
+    [history, tracks],
   );
 
   const availableTypes = useMemo(
@@ -136,8 +137,8 @@ export default function FavoritesPage() {
     console.log("Download track", track);
   }
 
-  function handleCreatePlaylist(name: string) {
-    createPlaylist(name);
+  async function handleCreatePlaylist(name: string) {
+    await createPlaylist(name);
     setIsModalOpen(false);
   }
 
