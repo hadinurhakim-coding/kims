@@ -31,6 +31,7 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
 
+	r.Get("/favicon.ico", handleFavicon)
 	r.Get("/healthz", handleHealth)
 	r.Get("/readyz", router.handleReady)
 	router.registerAPIRoutes(r)
@@ -79,6 +80,10 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
+}
+
+func handleFavicon(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (rtr *Router) handleReady(w http.ResponseWriter, r *http.Request) {

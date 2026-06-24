@@ -31,7 +31,7 @@ func main() {
 		log.Fatal("DATABASE_URL is required")
 	}
 
-	if os.Getenv("SKIP_MIGRATIONS") == "true" {
+	if shouldSkipMigrations() {
 		log.Printf("migrations skipped")
 	} else if err := db.RunMigrations(databaseURL); err != nil {
 		log.Fatalf("migrations failed: %v", err)
@@ -56,4 +56,14 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+func shouldSkipMigrations() bool {
+	if os.Getenv("RUN_MIGRATIONS") == "true" {
+		return false
+	}
+
+	return os.Getenv("SKIP_MIGRATIONS") == "true" ||
+		os.Getenv("VERCEL") == "1" ||
+		os.Getenv("APP_ENV") == "production"
 }
