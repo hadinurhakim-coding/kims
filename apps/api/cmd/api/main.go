@@ -31,10 +31,13 @@ func main() {
 		log.Fatal("DATABASE_URL is required")
 	}
 
-	if err := db.RunMigrations(databaseURL); err != nil {
+	if os.Getenv("SKIP_MIGRATIONS") == "true" {
+		log.Printf("migrations skipped")
+	} else if err := db.RunMigrations(databaseURL); err != nil {
 		log.Fatalf("migrations failed: %v", err)
+	} else {
+		log.Printf("migrations applied successfully")
 	}
-	log.Printf("migrations applied successfully")
 
 	dbConn, err := db.Open(ctx, databaseURL)
 	if err != nil {

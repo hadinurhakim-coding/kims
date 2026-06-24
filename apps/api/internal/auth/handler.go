@@ -3,7 +3,6 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/middleware"
@@ -26,25 +25,14 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[debug][register][backend] handler:start method=%s path=%s", r.Method, r.URL.Path)
-
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("[debug][register][backend] handler:decode_error err=%v", err)
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	log.Printf(
-		"[debug][register][backend] handler:decoded email=%q name=%q has_password=%t",
-		req.Email,
-		req.Name,
-		req.Password != "",
-	)
-
 	res, err := h.svc.Register(r.Context(), req)
 	if err != nil {
-		log.Printf("[debug][register][backend] handler:service_error email=%q err=%v", req.Email, err)
 		switch {
 		case errors.Is(err, ErrInvalidInput):
 			writeError(w, http.StatusBadRequest, "name, email, and password are required")
@@ -56,11 +44,6 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf(
-		"[debug][register][backend] handler:success user_id=%s email=%q",
-		res.User.ID,
-		res.User.Email,
-	)
 	writeJSON(w, http.StatusCreated, res)
 }
 

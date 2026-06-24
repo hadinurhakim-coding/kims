@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -51,49 +50,28 @@ func (s *Service) Register(
 ) (*AuthResponse, error) {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-	log.Printf(
-		"[debug][register][backend] service:start email=%q name=%q has_password=%t",
-		req.Email,
-		req.Name,
-		req.Password != "",
-	)
 
 	if req.Name == "" || req.Email == "" || req.Password == "" {
-		log.Printf("[debug][register][backend] service:invalid_input email=%q name_empty=%t email_empty=%t password_empty=%t", req.Email, req.Name == "", req.Email == "", req.Password == "")
 		return nil, ErrInvalidInput
 	}
 
 	if _, err := s.repo.GetUserByEmail(ctx, req.Email); err == nil {
-		log.Printf("[debug][register][backend] service:email_exists email=%q", req.Email)
 		return nil, ErrEmailAlreadyExists
 	} else if !errors.Is(err, pgx.ErrNoRows) {
-		log.Printf("[debug][register][backend] service:existing_user_check_error email=%q err=%v", req.Email, err)
 		return nil, fmt.Errorf("check existing user: %w", err)
 	}
-	log.Printf("[debug][register][backend] service:email_available email=%q", req.Email)
 
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
-		log.Printf("[debug][register][backend] service:hash_error email=%q err=%v", req.Email, err)
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
-	log.Printf("[debug][register][backend] service:password_hashed email=%q", req.Email)
 
 	user, err := s.repo.CreateUser(ctx, req.Name, req.Email, hashedPassword)
 	if err != nil {
-		log.Printf("[debug][register][backend] service:create_user_error email=%q err=%v", req.Email, err)
 		return nil, fmt.Errorf("create user: %w", err)
 	}
-	log.Printf("[debug][register][backend] service:user_created user_id=%s email=%q", user.ID, user.Email)
 
-	auth, err := s.issueTokens(ctx, user)
-	if err != nil {
-		log.Printf("[debug][register][backend] service:issue_tokens_error user_id=%s email=%q err=%v", user.ID, user.Email, err)
-		return nil, err
-	}
-
-	log.Printf("[debug][register][backend] service:success user_id=%s email=%q", auth.User.ID, auth.User.Email)
-	return auth, nil
+	return s.issueTokens(ctx, user)
 }
 
 func (s *Service) Login(ctx context.Context, req LoginRequest) (*AuthResponse, error) {

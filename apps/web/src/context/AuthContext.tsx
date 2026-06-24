@@ -60,17 +60,6 @@ async function parseAPIError(response: Response, fallback: string) {
 }
 
 async function requestAuth(path: string, payload: unknown) {
-  const isRegisterRequest = path === "/auth/register";
-  if (isRegisterRequest) {
-    const registerPayload = payload as Partial<RegisterPayload>;
-    console.debug("[debug][register][frontend] request:start", {
-      path,
-      email: registerPayload.email,
-      name: registerPayload.name,
-      hasPassword: Boolean(registerPayload.password),
-    });
-  }
-
   const response = await fetch(`${apiBasePath}${path}`, {
     method: "POST",
     headers: {
@@ -79,35 +68,11 @@ async function requestAuth(path: string, payload: unknown) {
     body: JSON.stringify(payload),
   });
 
-  if (isRegisterRequest) {
-    console.debug("[debug][register][frontend] response:received", {
-      status: response.status,
-      ok: response.ok,
-    });
-  }
-
   if (!response.ok) {
-    const message = await parseAPIError(response, "Authentication failed");
-    if (isRegisterRequest) {
-      console.debug("[debug][register][frontend] response:error", {
-        status: response.status,
-        message,
-      });
-    }
-    throw new Error(message);
+    throw new Error(await parseAPIError(response, "Authentication failed"));
   }
 
-  const auth = (await response.json()) as AuthResponse;
-  if (isRegisterRequest) {
-    console.debug("[debug][register][frontend] response:success", {
-      userId: auth.user.id,
-      email: auth.user.email,
-      hasAccessToken: Boolean(auth.access_token),
-      hasRefreshToken: Boolean(auth.refresh_token),
-    });
-  }
-
-  return auth;
+  return (await response.json()) as AuthResponse;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -169,11 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (payload: RegisterPayload) => {
-      console.debug("[debug][register][frontend] auth-context:submit", {
-        email: payload.email,
-        name: payload.name,
-        hasPassword: Boolean(payload.password),
-      });
       persistAuth(await requestAuth("/auth/register", payload));
     },
     [persistAuth],
