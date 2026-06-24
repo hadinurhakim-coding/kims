@@ -109,6 +109,19 @@ export default function RegisterPage() {
   }
 
   async function handleSubmit() {
+    console.debug("[debug][register][frontend] page:submit-clicked", {
+      email,
+      name,
+      termsAccepted,
+      canSubmit,
+      validations: {
+        name: validations.name.valid,
+        email: validations.email.valid,
+        password: validations.password.valid,
+        confirmPassword: validations.confirmPassword.valid,
+      },
+    });
+
     setHasSubmitted(true);
     setTouched({
       name: true,
@@ -118,16 +131,37 @@ export default function RegisterPage() {
     });
     setError(null);
 
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      console.debug("[debug][register][frontend] page:blocked-by-validation", {
+        email,
+        name,
+        termsAccepted,
+      });
+      return;
+    }
 
     setIsLoading(true);
 
     try {
+      console.debug("[debug][register][frontend] page:register-call:start", {
+        email,
+        name,
+      });
       await register({ name, email, password });
+      console.debug("[debug][register][frontend] page:register-call:success", {
+        email,
+      });
       router.replace("/");
     } catch (err) {
+      console.debug("[debug][register][frontend] page:register-call:error", {
+        email,
+        message: err instanceof Error ? err.message : "Unknown error",
+      });
       setError(err instanceof Error ? err.message : "Unable to register.");
     } finally {
+      console.debug("[debug][register][frontend] page:register-call:done", {
+        email,
+      });
       setIsLoading(false);
     }
   }
