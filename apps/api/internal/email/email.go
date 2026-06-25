@@ -2,22 +2,35 @@ package email
 
 import (
 	"bytes"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"html/template"
-	"net/mail"
-	"net/smtp"
+	"net/http"
 	"os"
-	"strconv"
 )
 
 type Service struct {
-	host        string
-	port        int
-	user        string
-	pass        string
+	apiKey      string
 	senderName  string
 	senderEmail string
+	httpClient  *http.Client
+}
+
+type brevoSender struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type brevoRecipient struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type brevoEmailRequest struct {
+	Sender      brevoSender      `json:"sender"`
+	To          []brevoRecipient `json:"to"`
+	Subject     string           `json:"subject"`
+	HTMLContent string           `json:"htmlContent"`
 }
 
 type OTPEmailData struct {
@@ -64,76 +77,72 @@ const otpEmailTemplate = `
 </html>`
 
 func NewService() *Service {
-	port, _ := strconv.Atoi(os.Getenv("BREVO_SMTP_PORT"))
-	if port == 0 {
-		port = 587
-	}
-
 	return &Service{
-		host:        os.Getenv("BREVO_SMTP_HOST"),
-		port:        port,
-		user:        os.Getenv("BREVO_SMTP_USER"),
-		pass:        os.Getenv("BREVO_SMTP_PASS"),
+		apiKey:      os.Getenv("BREVO_API_KEY"),
 		senderName:  os.Getenv("BREVO_SENDER_NAME"),
 		senderEmail: os.Getenv("BREVO_SENDER_EMAIL"),
+		httpClient:  &http.Client{},
 	}
 }
 
 func (s *Service) SendOTP(toEmail string, toName string, otpCode string) error {
-	if err := s.validateConfig(); err != nil {
-		return err
-	}
-
 	tmpl, err := template.New("otp").Parse(otpEmailTemplate)
 	if err != nil {
-		return fmt.Errorf("parse otp email template: %w", err)
+		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	var body bytes.Buffer
-	if err := tmpl.Execute(&body, OTPEmailData{
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, OTPEmailData{
 		Name:      fallbackName(toName),
 		OTPCode:   otpCode,
 		ExpiryMin: 30,
 	}); err != nil {
-		return fmt.Errorf("execute otp email template: %w", err)
+		return fmt.Errorf("failed to render template: %w", err)
 	}
 
-	from := mail.Address{Name: s.senderName, Address: s.senderEmail}
-	to := mail.Address{Name: toName, Address: toEmail}
-	message := buildHTMLMessage(from, to, "Your KIMS password reset code", body.String())
+	payload := brevoEmailRequest{
+		Sender: brevoSender{
+			Name:  s.senderName,
+			Email: s.senderEmail,
+		},
+		To: []brevoRecipient{
+			{Name: fallbackName(toName), Email: toEmail},
+		},
+		Subject:     "Your KIMS password reset code",
+		HTMLContent: buf.String(),
+	}
 
-	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	auth := smtp.PlainAuth("", s.user, s.pass, s.host)
-	if err := smtp.SendMail(addr, auth, s.senderEmail, []string{toEmail}, []byte(message)); err != nil {
-		return fmt.Errorf("send otp email: %w", err)
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"https://api.brevo.com/v3/smtp/email",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api-key", s.apiKey)
+	req.Header.Set("Accept", "application/json")
+
+	res, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call Brevo API: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 300 {
+		var errBody map[string]any
+		_ = json.NewDecoder(res.Body).Decode(&errBody)
+		return fmt.Errorf("brevo API error status=%d body=%v", res.StatusCode, errBody)
 	}
 
 	return nil
-}
-
-func (s *Service) validateConfig() error {
-	if s.host == "" ||
-		s.user == "" ||
-		s.pass == "" ||
-		s.senderName == "" ||
-		s.senderEmail == "" {
-		return errors.New("email service is not configured")
-	}
-
-	return nil
-}
-
-func buildHTMLMessage(from mail.Address, to mail.Address, subject string, body string) string {
-	var msg bytes.Buffer
-	msg.WriteString("From: " + from.String() + "\r\n")
-	msg.WriteString("To: " + to.String() + "\r\n")
-	msg.WriteString("Subject: " + subject + "\r\n")
-	msg.WriteString("MIME-Version: 1.0\r\n")
-	msg.WriteString(`Content-Type: text/html; charset="UTF-8"` + "\r\n")
-	msg.WriteString("\r\n")
-	msg.WriteString(body)
-
-	return msg.String()
 }
 
 func fallbackName(name string) string {
