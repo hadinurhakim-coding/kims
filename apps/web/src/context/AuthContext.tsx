@@ -17,6 +17,8 @@ export interface AuthContextValue {
   accessToken: string | null;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  forgotPassword: (payload: ForgotPasswordPayload) => Promise<ForgotPasswordResponse>;
+  resetPassword: (payload: ResetPasswordPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -34,6 +36,20 @@ export type LoginPayload = {
 export type RegisterPayload = {
   name: string;
   email: string;
+  password: string;
+};
+
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+  reset_url?: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
   password: string;
 };
 
@@ -73,6 +89,22 @@ async function requestAuth(path: string, payload: unknown) {
   }
 
   return (await response.json()) as AuthResponse;
+}
+
+async function requestJSON<T>(path: string, payload: unknown, fallback: string) {
+  const response = await fetch(`${apiBasePath}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseAPIError(response, fallback));
+  }
+
+  return (await response.json()) as T;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -139,6 +171,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [persistAuth],
   );
 
+  const forgotPassword = useCallback(async (payload: ForgotPasswordPayload) => {
+    return requestJSON<ForgotPasswordResponse>(
+      "/auth/forgot-password",
+      payload,
+      "Unable to send reset link.",
+    );
+  }, []);
+
+  const resetPassword = useCallback(async (payload: ResetPasswordPayload) => {
+    await requestJSON<{ message: string }>(
+      "/auth/reset-password",
+      payload,
+      "Unable to reset password.",
+    );
+  }, []);
+
   const logout = useCallback(async () => {
     const currentAccessToken = accessToken;
 
@@ -177,9 +225,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accessToken,
       login,
       register,
+      forgotPassword,
+      resetPassword,
       logout,
     }),
-    [isAuthenticated, hasLoaded, user, accessToken, login, register, logout],
+    [
+      isAuthenticated,
+      hasLoaded,
+      user,
+      accessToken,
+      login,
+      register,
+      forgotPassword,
+      resetPassword,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

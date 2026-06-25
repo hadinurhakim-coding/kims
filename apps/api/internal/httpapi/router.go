@@ -9,10 +9,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/auth"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/email"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/favorites"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/history"
 	appmiddleware "github.com/hadinurhakim-coding/kims/apps/api/internal/middleware"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/playlists"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/resetpassword"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/tracks"
 )
 
@@ -41,6 +43,12 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 
 func (rtr *Router) registerAPIRoutes(r chi.Router) {
 	authHandler := auth.NewHandler(auth.NewService(auth.NewRepository(rtr.dbConn)))
+	resetPasswordHandler := resetpassword.NewHandler(
+		resetpassword.NewService(
+			resetpassword.NewRepository(rtr.dbConn),
+			email.NewService(),
+		),
+	)
 	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn)))
 	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn)))
 	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn)))
@@ -50,6 +58,9 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 		r.Post("/auth/register", authHandler.Register)
 		r.Post("/auth/login", authHandler.Login)
 		r.Post("/auth/refresh", authHandler.Refresh)
+		r.Post("/auth/forgot-password", resetPasswordHandler.RequestOTP)
+		r.Post("/auth/verify-otp", resetPasswordHandler.VerifyOTP)
+		r.Post("/auth/reset-password", resetPasswordHandler.ResetPassword)
 
 		r.Get("/tracks", tracksHandler.List)
 		r.Get("/tracks/{id}", tracksHandler.GetByID)
