@@ -25,6 +25,7 @@ var (
 	ErrInvalidInput   = errors.New("invalid input")
 	ErrInvalidOTP     = errors.New("invalid or expired OTP code")
 	ErrOTPAlreadyUsed = errors.New("OTP code already used")
+	ErrPasswordReused = errors.New("new password must be different from current password")
 )
 
 const (
@@ -134,6 +135,15 @@ func (s *Service) ResetPassword(ctx context.Context, req ResetPasswordRequest) e
 		return ErrInvalidOTP
 	}
 
+	currentPasswordHash, err := s.repo.GetPasswordHash(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get password hash: %w", err)
+	}
+
+	if verifyPassword(currentPasswordHash, req.NewPassword) {
+		return ErrPasswordReused
+	}
+
 	hashedPassword, err := hashPassword(req.NewPassword)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
@@ -240,4 +250,32 @@ func hashPassword(password string) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(salt) +
 		":" +
 		base64.RawStdEncoding.EncodeToString(hash), nil
+}
+
+func verifyPassword(stored string, plain string) bool {
+	parts := strings.Split(stored, ":")
+	if len(parts) != 2 {
+		return false
+	}
+
+	salt, err := base64.RawStdEncoding.DecodeString(parts[0])
+	if err != nil {
+		return false
+	}
+
+	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[1])
+	if err != nil {
+		return false
+	}
+
+	actualHash := argon2.IDKey(
+		[]byte(plain),
+		salt,
+		argonTime,
+		argonMemory,
+		argonThreads,
+		uint32(len(expectedHash)),
+	)
+
+	return subtle.ConstantTimeCompare(actualHash, expectedHash) == 1
 }

@@ -113,6 +113,21 @@ func (r *Repository) MarkOTPUsed(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *Repository) GetPasswordHash(ctx context.Context, userID string) (string, error) {
+	const query = `
+		SELECT password
+		FROM users
+		WHERE id = $1
+	`
+
+	var passwordHash string
+	if err := r.dbConn.QueryRow(ctx, query, userID).Scan(&passwordHash); err != nil {
+		return "", fmt.Errorf("get password hash: %w", err)
+	}
+
+	return passwordHash, nil
+}
+
 func (r *Repository) UpdatePassword(ctx context.Context, userID string, hashedPassword string) error {
 	const query = `
 		UPDATE users

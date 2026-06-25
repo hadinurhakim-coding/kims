@@ -111,6 +111,8 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, ErrInvalidOTP):
 			middleware.WriteJSON(w, http.StatusBadRequest, messageResponse{Message: "Invalid or expired code"})
+		case errors.Is(err, ErrPasswordReused):
+			middleware.WriteJSON(w, http.StatusBadRequest, messageResponse{Message: "New password must be different from your current password"})
 		case errors.Is(err, ErrInvalidInput):
 			middleware.WriteJSON(w, http.StatusBadRequest, messageResponse{Message: "invalid request"})
 		default:
