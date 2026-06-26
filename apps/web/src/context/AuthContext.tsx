@@ -107,6 +107,36 @@ async function requestJSON<T>(path: string, payload: unknown, fallback: string) 
   return (await response.json()) as T;
 }
 
+function clearStoredAuth() {
+  try {
+    localStorage.removeItem(accessTokenKey);
+    localStorage.removeItem(refreshTokenKey);
+    localStorage.removeItem(userKey);
+    localStorage.removeItem(legacyMockStorageKey);
+  } catch {
+    // Ignore unavailable storage.
+  }
+}
+
+function isTokenUsable(token: string) {
+  const [, payload] = token.split(".");
+  if (!payload) return false;
+
+  try {
+    const normalizedPayload = payload
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const claims = JSON.parse(window.atob(normalizedPayload)) as {
+      exp?: number;
+    };
+
+    return typeof claims.exp === "number" && claims.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -121,7 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedAccessToken = localStorage.getItem(accessTokenKey);
         const storedUser = localStorage.getItem(userKey);
 
-        if (!storedAccessToken || !storedUser) {
+        if (!storedAccessToken || !storedUser || !isTokenUsable(storedAccessToken)) {
+          clearStoredAuth();
           setIsAuthenticated(false);
           setUser(null);
           setAccessToken(null);
@@ -195,10 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(null);
 
     try {
-      localStorage.removeItem(accessTokenKey);
-      localStorage.removeItem(refreshTokenKey);
-      localStorage.removeItem(userKey);
-      localStorage.removeItem(legacyMockStorageKey);
+      clearStoredAuth();
     } catch {
       // Ignore unavailable storage.
     }

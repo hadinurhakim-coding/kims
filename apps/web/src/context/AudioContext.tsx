@@ -29,6 +29,14 @@ export interface AudioContextValue {
 
 const AudioContext = createContext<AudioContextValue | null>(null);
 
+function isPlayableAudioSource(source: string) {
+  return (
+    source.startsWith("/") ||
+    source.startsWith("http://") ||
+    source.startsWith("https://")
+  );
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const { recordPlay } = useHistory();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -103,9 +111,20 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setIsPlaying(false);
     setDuration(0);
     setCurrentTime(0);
-    void waveSurfer.load(track.audioSrc).then(() => {
-      void recordPlay(track.id);
-    });
+    if (!isPlayableAudioSource(track.audioSrc)) {
+      setIsReady(false);
+      return;
+    }
+
+    void waveSurfer
+      .load(track.audioSrc)
+      .then(() => {
+        void recordPlay(track.id);
+      })
+      .catch(() => {
+        setIsReady(false);
+        setIsPlaying(false);
+      });
   }, [recordPlay]);
 
   const togglePlayPause = useCallback(() => {
