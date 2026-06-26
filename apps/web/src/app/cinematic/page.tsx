@@ -160,7 +160,7 @@ export default function CinematicPage() {
       <div
         className={[
           "mx-auto w-full max-w-6xl px-4 pt-6 md:px-6 lg:px-8",
-          currentTrack ? "pb-36" : "pb-6",
+          currentTrack ? "pb-40" : "pb-6",
         ].join(" ")}
       >
         <CatalogLayout

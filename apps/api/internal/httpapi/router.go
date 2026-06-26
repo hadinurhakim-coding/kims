@@ -72,6 +72,8 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 
 			r.Post("/auth/logout", authHandler.Logout)
 
+			r.Post("/tracks", tracksHandler.Create)
+
 			r.Get("/favorites", favoritesHandler.List)
 			r.Post("/favorites", favoritesHandler.Add)
 			r.Delete("/favorites/{trackID}", favoritesHandler.Remove)

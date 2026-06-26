@@ -1,6 +1,9 @@
 param(
   [switch]$SkipMigration,
-  [switch]$SkipFrontend
+  [switch]$SkipBackend,
+  [switch]$SkipFrontend,
+  [int]$BackendPort = 8080,
+  [int]$FrontendPort = 3000
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,6 +53,56 @@ function Import-DotEnv {
   }
 }
 
+function Test-PortAvailable {
+  param([int]$Port)
+
+  $listener = Get-NetTCPConnection `
+    -LocalPort $Port `
+    -State Listen `
+    -ErrorAction SilentlyContinue
+
+  if (-not $listener) {
+    return
+  }
+
+  $processes = $listener | ForEach-Object {
+    $process = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+    if ($process) {
+      "$($process.ProcessName) (PID $($process.Id))"
+    } else {
+      "PID $($_.OwningProcess)"
+    }
+  } | Sort-Object -Unique
+
+  throw "Port $Port is already in use by: $($processes -join ', '). Stop that process or pass a different port."
+}
+
+function Wait-ForHttpOk {
+  param(
+    [string]$Url,
+    [int]$TimeoutSeconds = 30
+  )
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+
+  while ((Get-Date) -lt $deadline) {
+    try {
+      $response = Invoke-WebRequest `
+        -Uri $Url `
+        -UseBasicParsing `
+        -TimeoutSec 2
+
+      if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+        return
+      }
+    } catch {
+      Start-Sleep -Milliseconds 500
+    }
+  }
+
+  throw "Timed out waiting for $Url"
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $apiDir = Join-Path $repoRoot "apps\api"
 $apiEnvPath = Join-Path $apiDir ".env"
@@ -77,16 +130,39 @@ if (-not $SkipMigration) {
   }
 }
 
+if (-not $SkipBackend) {
+  Test-PortAvailable -Port $BackendPort
+
+  Write-Step "Starting API at http://localhost:$BackendPort"
+  $backendCommand = @"
+`$ErrorActionPreference = "Stop"
+Set-Location "$apiDir"
+`$env:PORT = "$BackendPort"
+`$env:HTTP_ADDR = ":$BackendPort"
+go run ./cmd/api
+"@
+
+  Start-Process `
+    -FilePath "powershell" `
+    -ArgumentList "-NoProfile", "-NoExit", "-Command", $backendCommand `
+    -WorkingDirectory $apiDir `
+    -WindowStyle Hidden | Out-Null
+
+  Wait-ForHttpOk -Url "http://localhost:$BackendPort/healthz"
+}
+
 if (-not $SkipFrontend) {
-  Write-Step "Starting frontend at http://localhost:3000"
+  Test-PortAvailable -Port $FrontendPort
+
+  Write-Step "Starting frontend at http://localhost:$FrontendPort"
   Push-Location $repoRoot
   try {
-    npm run web:dev
+    npm run dev --workspace @kims/web -- --port $FrontendPort
   } finally {
     Pop-Location
   }
 }
 
-if ($SkipMigration -and $SkipFrontend) {
-  Write-Step "Nothing to run because both -SkipMigration and -SkipFrontend were provided"
+if ($SkipMigration -and $SkipBackend -and $SkipFrontend) {
+  Write-Step "Nothing to run because -SkipMigration, -SkipBackend, and -SkipFrontend were provided"
 }

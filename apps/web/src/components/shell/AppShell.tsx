@@ -24,7 +24,7 @@ export function AppShell({
   const { currentTrack } = useAudio();
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]">
+    <div className="min-h-screen overflow-x-hidden overscroll-none bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-[var(--radius-full)] focus:bg-[var(--color-surface)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[var(--color-accent-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]"
@@ -46,7 +46,7 @@ export function AppShell({
       <div className="min-h-screen pt-16 lg:ml-[220px] lg:mr-[280px]">
         <main
           id="main-content"
-          className="min-h-[calc(100vh-136px)] overflow-y-auto bg-[var(--color-background)]"
+          className="min-h-[calc(100vh-136px)] overflow-y-auto overscroll-none bg-[var(--color-background)]"
         >
           <PageTransition>{children}</PageTransition>
         </main>

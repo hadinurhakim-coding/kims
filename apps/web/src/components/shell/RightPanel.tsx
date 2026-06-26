@@ -40,13 +40,13 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
   return (
     <div
       aria-label="Recent listened panel"
-      className="h-full overflow-y-auto border-l border-[var(--color-border)] bg-[var(--color-surface)] px-4 pb-5 pt-0 lg:pt-16"
+      className="h-full overflow-y-auto overscroll-none border-l border-[var(--color-border)] bg-[var(--color-surface)] px-4 pb-5 pt-0 lg:pt-16"
     >
       {currentTrack ? (
         <div className="-mx-4 overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)]">
           <div className="relative aspect-[16/10] w-full overflow-hidden">
             <Image
-              src="/placeholder-cover.png"
+              src={currentTrack.cover}
               alt={currentTrack.title}
               fill
               sizes="280px"

@@ -19,7 +19,7 @@ func NewRepository(dbConn *pgxpool.Pool) *Repository {
 
 func (r *Repository) List(ctx context.Context, userID string, limit, offset int) ([]HistoryTrack, int, error) {
 	countQuery := `
-		SELECT COUNT(*)
+		SELECT COUNT(DISTINCT h.track_id)
 		FROM history h
 		JOIN tracks t ON t.id = h.track_id
 		WHERE h.user_id = $1
@@ -32,8 +32,21 @@ func (r *Repository) List(ctx context.Context, userID string, limit, offset int)
 	}
 
 	query := `
+		WITH ranked_history AS (
+			SELECT
+				h.id,
+				h.track_id,
+				h.played_at,
+				SUM(h.play_count) OVER (PARTITION BY h.track_id)::int AS total_play_count,
+				ROW_NUMBER() OVER (
+					PARTITION BY h.track_id
+					ORDER BY h.played_at DESC, h.id DESC
+				) AS row_number
+			FROM history h
+			WHERE h.user_id = $1
+		)
 		SELECT
-			h.id,
+			rh.id,
 			t.id,
 			t.title,
 			t.type,
@@ -43,13 +56,13 @@ func (r *Repository) List(ctx context.Context, userID string, limit, offset int)
 			t.license_label,
 			t.cover_url,
 			t.audio_url,
-			h.play_count,
-			h.played_at
-		FROM history h
-		JOIN tracks t ON t.id = h.track_id
-		WHERE h.user_id = $1
+			rh.total_play_count,
+			rh.played_at
+		FROM ranked_history rh
+		JOIN tracks t ON t.id = rh.track_id
+		WHERE rh.row_number = 1
 			AND t.is_published = true
-		ORDER BY h.played_at DESC
+		ORDER BY rh.played_at DESC
 		LIMIT $2 OFFSET $3
 	`
 
@@ -90,6 +103,7 @@ func (r *Repository) List(ctx context.Context, userID string, limit, offset int)
 
 func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
 	var entryID string
+	var totalPlayCount int
 	err := r.dbConn.QueryRow(
 		ctx,
 		`
@@ -97,43 +111,73 @@ func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
 			FROM history
 			WHERE user_id = $1
 				AND track_id = $2
-				AND played_at > NOW() - INTERVAL '30 minutes'
+			ORDER BY played_at DESC, id DESC
 			LIMIT 1
 		`,
 		userID,
 		trackID,
 	).Scan(&entryID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return fmt.Errorf("find recent history entry: %w", err)
+		return fmt.Errorf("find history entry: %w", err)
 	}
 
-	if entryID != "" {
+	if errors.Is(err, pgx.ErrNoRows) {
 		if _, err := r.dbConn.Exec(
 			ctx,
 			`
-				UPDATE history
-				SET play_count = play_count + 1,
-					played_at = NOW()
-				WHERE id = $1
+				INSERT INTO history (user_id, track_id)
+				VALUES ($1, $2)
 			`,
-			entryID,
+			userID,
+			trackID,
 		); err != nil {
-			return fmt.Errorf("update history entry: %w", err)
+			return fmt.Errorf("insert history entry: %w", err)
 		}
 
 		return nil
 	}
 
-	if _, err := r.dbConn.Exec(
+	if err := r.dbConn.QueryRow(
 		ctx,
 		`
-			INSERT INTO history (user_id, track_id)
-			VALUES ($1, $2)
+			SELECT COALESCE(SUM(play_count), 0)
+			FROM history
+			WHERE user_id = $1
+				AND track_id = $2
 		`,
 		userID,
 		trackID,
+	).Scan(&totalPlayCount); err != nil {
+		return fmt.Errorf("count track plays: %w", err)
+	}
+
+	if _, err := r.dbConn.Exec(
+		ctx,
+		`
+			UPDATE history
+			SET play_count = $2,
+				played_at = NOW()
+			WHERE id = $1
+		`,
+		entryID,
+		totalPlayCount+1,
 	); err != nil {
-		return fmt.Errorf("insert history entry: %w", err)
+		return fmt.Errorf("update history entry: %w", err)
+	}
+
+	if _, err := r.dbConn.Exec(
+		ctx,
+		`
+			DELETE FROM history
+			WHERE user_id = $1
+				AND track_id = $2
+				AND id <> $3
+		`,
+		userID,
+		trackID,
+		entryID,
+	); err != nil {
+		return fmt.Errorf("dedupe history entries: %w", err)
 	}
 
 	return nil
@@ -142,7 +186,12 @@ func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
 func (r *Repository) Remove(ctx context.Context, entryID, userID string) error {
 	query := `
 		DELETE FROM history
-		WHERE id = $1 AND user_id = $2
+		WHERE user_id = $2
+			AND track_id = (
+				SELECT track_id
+				FROM history
+				WHERE id = $1 AND user_id = $2
+			)
 	`
 
 	if _, err := r.dbConn.Exec(ctx, query, entryID, userID); err != nil {

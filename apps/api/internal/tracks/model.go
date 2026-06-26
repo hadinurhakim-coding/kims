@@ -33,3 +33,15 @@ type ListResponse struct {
 	Limit  int     `json:"limit"`
 	Offset int     `json:"offset"`
 }
+
+type CreateRequest struct {
+	Title        string  `json:"title"`
+	Type         string  `json:"type"`
+	Mood         string  `json:"mood"`
+	SFXCategory  *string `json:"sfx_category,omitempty"`
+	Duration     string  `json:"duration"`
+	LicenseLabel string  `json:"license_label"`
+	CoverURL     string  `json:"cover_url"`
+	AudioURL     string  `json:"audio_url"`
+	IsPublished  *bool   `json:"is_published,omitempty"`
+}

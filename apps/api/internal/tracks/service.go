@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/storage"
 )
 
 var ErrNotFound = errors.New("track not found")
+var ErrInvalidInput = errors.New("invalid track input")
 
 type Service struct {
 	repo    *Repository
@@ -62,6 +64,49 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Track, error) {
 	}
 	if track == nil {
 		return nil, ErrNotFound
+	}
+	if err := s.resolveTrack(ctx, track); err != nil {
+		return nil, err
+	}
+
+	return track, nil
+}
+
+func (s *Service) Create(ctx context.Context, req CreateRequest) (*Track, error) {
+	req.Title = strings.TrimSpace(req.Title)
+	req.Type = strings.TrimSpace(req.Type)
+	req.Mood = strings.TrimSpace(req.Mood)
+	req.Duration = strings.TrimSpace(req.Duration)
+	req.LicenseLabel = strings.TrimSpace(req.LicenseLabel)
+	req.CoverURL = strings.TrimSpace(req.CoverURL)
+	req.AudioURL = strings.TrimSpace(req.AudioURL)
+
+	if req.SFXCategory != nil {
+		trimmed := strings.TrimSpace(*req.SFXCategory)
+		req.SFXCategory = &trimmed
+		if trimmed == "" {
+			req.SFXCategory = nil
+		}
+	}
+
+	if req.Title == "" ||
+		req.Type == "" ||
+		req.Mood == "" ||
+		req.Duration == "" ||
+		req.LicenseLabel == "" ||
+		req.CoverURL == "" ||
+		req.AudioURL == "" {
+		return nil, ErrInvalidInput
+	}
+
+	isPublished := true
+	if req.IsPublished != nil {
+		isPublished = *req.IsPublished
+	}
+
+	track, err := s.repo.Create(ctx, req, isPublished)
+	if err != nil {
+		return nil, err
 	}
 	if err := s.resolveTrack(ctx, track); err != nil {
 		return nil, err

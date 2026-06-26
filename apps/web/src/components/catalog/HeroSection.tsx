@@ -6,6 +6,7 @@ import Image from "next/image";
 
 export interface HeroSectionProps {
   track: Track;
+  eyebrow?: string;
   onPlay?: (track: Track) => void;
   onFavorite?: (track: Track) => void;
 }
@@ -18,6 +19,7 @@ const licenseBadgeClasses: Record<Track["licenseLabel"], string> = {
 
 export function HeroSection({
   track,
+  eyebrow = "Featured Track",
   onPlay,
   onFavorite,
 }: HeroSectionProps) {
@@ -25,7 +27,7 @@ export function HeroSection({
     <section className="flex flex-col items-center gap-6 rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-md)] md:flex-row md:justify-between md:p-8">
       <div className="order-2 flex w-full flex-col justify-center md:order-1">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-          Featured Track
+          {eyebrow}
         </div>
         <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">
           {track.title}

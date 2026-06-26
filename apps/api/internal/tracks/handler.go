@@ -1,6 +1,7 @@
 package tracks
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -52,6 +53,27 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	middleware.WriteJSON(w, http.StatusOK, track)
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	var req CreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	track, err := h.svc.Create(r.Context(), req)
+	if err != nil {
+		if errors.Is(err, ErrInvalidInput) {
+			writeError(w, http.StatusBadRequest, "invalid track input")
+			return
+		}
+
+		writeError(w, http.StatusInternalServerError, "failed to create track")
+		return
+	}
+
+	middleware.WriteJSON(w, http.StatusCreated, track)
 }
 
 func parseInt(value string) int {

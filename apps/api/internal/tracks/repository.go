@@ -130,6 +130,54 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*Track, error) {
 	return &track, nil
 }
 
+func (r *Repository) Create(ctx context.Context, req CreateRequest, isPublished bool) (*Track, error) {
+	query := `
+		INSERT INTO tracks (
+			title,
+			type,
+			mood,
+			sfx_category,
+			duration,
+			license_label,
+			cover_url,
+			audio_url,
+			is_published
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING
+			id,
+			title,
+			type,
+			mood,
+			sfx_category,
+			duration,
+			license_label,
+			cover_url,
+			audio_url,
+			is_published,
+			created_at,
+			updated_at
+	`
+
+	track, err := scanTrack(r.dbConn.QueryRow(
+		ctx,
+		query,
+		req.Title,
+		req.Type,
+		req.Mood,
+		req.SFXCategory,
+		req.Duration,
+		req.LicenseLabel,
+		req.CoverURL,
+		req.AudioURL,
+		isPublished,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("create track: %w", err)
+	}
+
+	return &track, nil
+}
+
 type trackScanner interface {
 	Scan(dest ...any) error
 }

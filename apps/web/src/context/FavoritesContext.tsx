@@ -14,6 +14,7 @@ import {
   apiRequest,
   type APIFavoriteListResponse,
 } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export interface FavoritesContextValue {
   favoritedIds: Set<string>;
@@ -25,6 +26,7 @@ const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, hasLoaded: authHasLoaded } = useAuth();
+  const router = useRouter();
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -61,8 +63,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, [authHasLoaded, isAuthenticated]);
 
   const toggleFavorite = useCallback(async (id: string) => {
-    let shouldAdd = false;
+    if (!authHasLoaded) return;
 
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    let shouldAdd = false;
     setFavoritedIds((currentIds) => {
       const nextIds = new Set(currentIds);
 
@@ -98,7 +106,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         return nextIds;
       });
     }
-  }, []);
+  }, [authHasLoaded, isAuthenticated, router]);
 
   const isFavorite = useCallback(
     (id: string) => favoritedIds.has(id),
