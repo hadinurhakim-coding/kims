@@ -19,7 +19,7 @@ Last updated: 2026-06-25
 - [x] Frontend no longer relies on mock localStorage auth for login/register.
 - [x] API routes are proxied from the Next.js app through `/api/v1`.
 - [x] Seed migration exists for 40 initial tracks.
-- [~] Basic forgot-password/reset-password endpoints and UI exist, but Brevo email delivery and OTP flow are still pending.
+- [x] Forgot-password uses Brevo REST API OTP flow with 3-step frontend reset.
 - [~] Seeded tracks still use local placeholder cover/audio assets, not real Supabase Storage files.
 - [~] CI exists for frontend lint/typecheck/build and backend tests.
 - [ ] Admin upload/content management is not implemented.
@@ -46,7 +46,7 @@ Last updated: 2026-06-25
   - [x] History UI is implemented and backed by API context.
 - [x] Step 9 - Auth UI
   - [x] Login and register pages are implemented.
-  - [~] Forgot password/reset password UI exists, but the production target is changing to a Brevo-powered 3-step OTP flow.
+  - [x] Forgot password uses a 3-step flow: email -> OTP -> new password.
 - [x] Step 10 - Wavesurfer.js audio integration
   - [x] AudioContext initializes Wavesurfer and loads the active track audio source.
   - [~] It currently streams whatever `audio_url` is returned by the API; Supabase signed URL streaming is still Step 12.
@@ -66,26 +66,27 @@ Last updated: 2026-06-25
   - [x] 11.10 History domain exists.
   - [x] 11.11 Routes are wired under `/api/v1`.
   - [x] 11.12 Frontend mock auth has been replaced with real API auth.
-  - [~] Auth is MVP-level: email verification, Brevo OTP password reset delivery, current-user endpoint, admin roles, and HttpOnly refresh cookies are still pending.
+  - [~] Auth is MVP-level: email verification, current-user endpoint, admin roles, and HttpOnly refresh cookies are still pending.
 
 ## Forgot Password With Brevo
 
-- [~] Forgot Password production flow
-  - [!] FP.1 Configure Brevo account and Gmail sender: SMTP credentials and sender verification must be done in Brevo/Gmail.
-  - [!] FP.2 Add Brevo config to Vercel environment variables.
-  - [~] FP.3 Password reset migration exists as `password_reset_tokens`; target OTP table/shape still needs adjustment to `password_resets` with OTP hash, expiry, and used flag.
-  - [ ] FP.4 Build email service in Go using Brevo SMTP and an HTML email template.
-  - [~] FP.5 Basic forgot-password logic exists inside auth; dedicated OTP-based forgot password domain is still pending.
-  - [~] FP.6 Basic forgot/reset routes are wired; OTP verify/reset route shape still needs finalization.
-  - [~] FP.7 Frontend `/forgot-password` exists, but still needs the 3-step flow: email -> OTP -> new password.
+- [x] Forgot Password production flow
+  - [x] FP.1 Configure Brevo account and Gmail sender.
+  - [x] FP.2 Add Brevo config to Vercel environment variables.
+  - [x] FP.3 Create OTP-based `password_resets` migration with OTP hash, expiry, and used flag.
+  - [x] FP.4 Build email service in Go using Brevo REST API and HTML email template.
+  - [x] FP.5 Build dedicated forgot password domain with handler, service, and repository.
+  - [x] FP.6 Wire forgot password routes.
+  - [x] FP.7 Frontend `/forgot-password` 3-step flow: email -> OTP -> new password.
   - [x] FP.8 Register debug console logs are removed.
+  - [x] FP.9 Prevent resetting to the current password.
 
 ## Database
 
 - [x] Migrations 001-007 exist.
 - [x] Tables covered by migrations include users, tracks, favorites, playlists, playlist_tracks, history, refresh_tokens, and schema_migrations.
 - [x] Seed migration 007 inserts 40 catalog tracks.
-- [~] Migration 008 exists for password reset tokens, but Brevo OTP flow may require a revised `password_resets` table.
+- [x] Migration 008 creates `password_resets` for OTP-based forgot password.
 - [~] Seed data uses local `/placeholder-cover.png` and `/Mimpi_Dua_Seal.mp3`.
 - [!] Supabase production migration state must be checked externally with `go run ./cmd/migrate -direction=up` and the Supabase table editor.
 
@@ -191,8 +192,8 @@ Last updated: 2026-06-25
 - [ ] `GET /api/v1/me`
 - [ ] `POST /api/v1/auth/verify-email`
 - [x] `POST /api/v1/auth/forgot-password`
+- [x] `POST /api/v1/auth/verify-otp`
 - [x] `POST /api/v1/auth/reset-password`
-- [ ] OTP verify/reset route for Brevo-based forgot password flow
 - [ ] Admin API routes
 - [ ] Signed asset URL routes
 - [ ] Download tracking route
@@ -211,19 +212,17 @@ Last updated: 2026-06-25
 ## Recommended Next Order
 
 1. Verify production environment variables in Vercel for both web and API.
-2. Complete Forgot Password with Brevo SMTP and OTP flow.
-3. Run a production smoke test for register, login, forgot password, tracks, favorites, playlists, and history.
-4. Complete Step 12 by moving audio and covers to Supabase Storage.
-5. Complete Step 13 so admins can upload and manage tracks without manual SQL.
-6. Harden launch requirements: CORS, rate limiting, security headers, privacy/terms pages, sitemap, and robots.txt.
-7. Add real frontend tests and E2E smoke tests.
-8. Run Lighthouse/Core Web Vitals audit before public launch.
+2. Run a production smoke test for register, login, forgot password, tracks, favorites, playlists, and history.
+3. Complete Step 12 by moving audio and covers to Supabase Storage.
+4. Complete Step 13 so admins can upload and manage tracks without manual SQL.
+5. Harden launch requirements: CORS, rate limiting, security headers, privacy/terms pages, sitemap, and robots.txt.
+6. Add real frontend tests and E2E smoke tests.
+7. Run Lighthouse/Core Web Vitals audit before public launch.
 
 ## Known Risks Before Launch
 
 - Real catalog media is not yet stored in Supabase Storage.
 - API migrations are skipped automatically in production unless `RUN_MIGRATIONS=true`; schema changes should be applied intentionally.
-- Forgot Password does not yet send real email through Brevo or use the planned 3-step OTP flow.
 - Refresh tokens are API-managed but not yet delivered through HttpOnly Secure cookies.
 - No admin role or admin UI exists yet.
 - No rate limiting exists yet.

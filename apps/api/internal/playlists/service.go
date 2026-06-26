@@ -3,8 +3,11 @@ package playlists
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/storage"
 )
 
 var ErrNotFound = errors.New("playlist not found")
@@ -12,11 +15,17 @@ var ErrNotOwner = errors.New("not authorized to modify this playlist")
 var ErrInvalidInput = errors.New("invalid playlist input")
 
 type Service struct {
-	repo *Repository
+	repo    *Repository
+	storage *storage.Service
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, storageSvc ...*storage.Service) *Service {
+	var mediaStorage *storage.Service
+	if len(storageSvc) > 0 {
+		mediaStorage = storageSvc[0]
+	}
+
+	return &Service{repo: repo, storage: mediaStorage}
 }
 
 func (s *Service) List(ctx context.Context, userID string) (*ListResponse, error) {
@@ -47,6 +56,11 @@ func (s *Service) GetByID(ctx context.Context, playlistID, userID string) (*Play
 	}
 	if detail == nil {
 		return nil, ErrNotFound
+	}
+	for i := range detail.Tracks {
+		if err := s.resolvePlaylistTrack(ctx, &detail.Tracks[i]); err != nil {
+			return nil, err
+		}
 	}
 
 	return detail, nil
@@ -104,4 +118,20 @@ func (s *Service) ensureOwner(ctx context.Context, playlistID, userID string) er
 	}
 
 	return ErrNotOwner
+}
+
+func (s *Service) resolvePlaylistTrack(ctx context.Context, track *PlaylistTrack) error {
+	if s.storage == nil || track == nil {
+		return nil
+	}
+
+	track.CoverURL = s.storage.ResolveCoverURL(track.CoverURL)
+
+	audioURL, err := s.storage.ResolveAudioURL(ctx, track.AudioURL)
+	if err != nil {
+		return fmt.Errorf("resolve playlist audio url: %w", err)
+	}
+	track.AudioURL = audioURL
+
+	return nil
 }

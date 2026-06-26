@@ -15,6 +15,7 @@ import (
 	appmiddleware "github.com/hadinurhakim-coding/kims/apps/api/internal/middleware"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/playlists"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/resetpassword"
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/storage"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/tracks"
 )
 
@@ -42,6 +43,7 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 }
 
 func (rtr *Router) registerAPIRoutes(r chi.Router) {
+	storageService := storage.NewServiceFromEnv()
 	authHandler := auth.NewHandler(auth.NewService(auth.NewRepository(rtr.dbConn)))
 	resetPasswordHandler := resetpassword.NewHandler(
 		resetpassword.NewService(
@@ -49,10 +51,10 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 			email.NewService(),
 		),
 	)
-	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn)))
-	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn)))
-	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn)))
-	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn)))
+	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn), storageService))
+	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn), storageService))
+	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn), storageService))
+	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn), storageService))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authHandler.Register)

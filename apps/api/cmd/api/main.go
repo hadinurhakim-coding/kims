@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/config"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/db"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/httpapi"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/observability"
 )
 
 func main() {
+	if err := config.LoadDotEnv(".env"); err != nil {
+		log.Printf("failed to load .env: %v", err)
+	}
+
 	if err := observability.InitSentry(); err != nil {
 		log.Printf("sentry initialization failed: %v", err)
 	}

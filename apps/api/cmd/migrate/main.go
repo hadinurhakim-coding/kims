@@ -9,11 +9,17 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/config"
 )
 
 const migrationSourceURL = "file://migrations"
 
 func main() {
+	if err := config.LoadDotEnv(".env"); err != nil {
+		log.Printf("failed to load .env: %v", err)
+	}
+
 	direction := flag.String("direction", "up", "up or down")
 	steps := flag.Int("steps", 0, "number of steps (0 = all)")
 	flag.Parse()

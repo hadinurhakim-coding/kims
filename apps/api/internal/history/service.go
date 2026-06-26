@@ -3,17 +3,26 @@ package history
 import (
 	"context"
 	"errors"
+	"fmt"
+
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/storage"
 )
 
 var ErrNotFound = errors.New("history entry not found")
 var ErrInvalidInput = errors.New("invalid history input")
 
 type Service struct {
-	repo *Repository
+	repo    *Repository
+	storage *storage.Service
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, storageSvc ...*storage.Service) *Service {
+	var mediaStorage *storage.Service
+	if len(storageSvc) > 0 {
+		mediaStorage = storageSvc[0]
+	}
+
+	return &Service{repo: repo, storage: mediaStorage}
 }
 
 func (s *Service) List(ctx context.Context, userID string, limit, offset int) (*ListResponse, error) {
@@ -30,6 +39,11 @@ func (s *Service) List(ctx context.Context, userID string, limit, offset int) (*
 	items, total, err := s.repo.List(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, err
+	}
+	for i := range items {
+		if err := s.resolveHistoryTrack(ctx, &items[i]); err != nil {
+			return nil, err
+		}
 	}
 
 	return &ListResponse{
@@ -56,4 +70,20 @@ func (s *Service) Remove(ctx context.Context, entryID, userID string) error {
 
 func (s *Service) Clear(ctx context.Context, userID string) error {
 	return s.repo.Clear(ctx, userID)
+}
+
+func (s *Service) resolveHistoryTrack(ctx context.Context, track *HistoryTrack) error {
+	if s.storage == nil || track == nil {
+		return nil
+	}
+
+	track.CoverURL = s.storage.ResolveCoverURL(track.CoverURL)
+
+	audioURL, err := s.storage.ResolveAudioURL(ctx, track.AudioURL)
+	if err != nil {
+		return fmt.Errorf("resolve history audio url: %w", err)
+	}
+	track.AudioURL = audioURL
+
+	return nil
 }
