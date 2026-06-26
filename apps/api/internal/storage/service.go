@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -84,14 +85,16 @@ func (s *Service) ResolveAudioURL(ctx context.Context, value string) (string, er
 
 	res, err := s.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("call supabase storage: %w", err)
+		log.Printf("supabase storage signed url request failed: %v", err)
+		return value, nil
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode >= 300 {
 		var errBody map[string]any
 		_ = json.NewDecoder(res.Body).Decode(&errBody)
-		return "", fmt.Errorf("supabase storage status=%d body=%v", res.StatusCode, errBody)
+		log.Printf("supabase storage signed url failed status=%d body=%v", res.StatusCode, errBody)
+		return value, nil
 	}
 
 	var signedRes struct {
@@ -107,7 +110,8 @@ func (s *Service) ResolveAudioURL(ctx context.Context, value string) (string, er
 		signedURL = signedRes.SignedUrl
 	}
 	if signedURL == "" {
-		return "", fmt.Errorf("signed url response missing signedURL")
+		log.Printf("supabase storage signed url response missing signedURL")
+		return value, nil
 	}
 	if strings.HasPrefix(signedURL, "http://") || strings.HasPrefix(signedURL, "https://") {
 		return signedURL, nil

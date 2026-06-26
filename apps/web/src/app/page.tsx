@@ -122,14 +122,23 @@ export default function HomePage() {
           currentTrack ? "pb-36" : "pb-6",
         ].join(" ")}
       >
-        {isLoading || !hasLoaded || !featuredTrack ? (
+        {isLoading || !hasLoaded ? (
           <SkeletonHero />
-        ) : (
+        ) : featuredTrack ? (
           <HeroSection
             track={featuredTrack}
             onPlay={handlePlayTrack}
             onFavorite={(track) => toggleFavorite(track.id)}
           />
+        ) : (
+          <section className="rounded-[var(--radius-lg)] bg-[var(--color-surface)] px-6 py-10 text-center shadow-[var(--shadow-md)]">
+            <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+              No tracks available
+            </h1>
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+              We could not load the catalog right now. Please try again later.
+            </p>
+          </section>
         )}
 
         <FilterChips onChange={setActiveFilter} />
@@ -140,10 +149,14 @@ export default function HomePage() {
           </h2>
 
           <div className="flex flex-col gap-2">
-            {isLoading ? (
+            {isLoading || !hasLoaded ? (
               Array.from({ length: 5 }, (_, index) => (
                 <SkeletonTrackItem key={index} />
               ))
+            ) : visibleTracks.length === 0 && searchQuery.trim() === "" ? (
+              <div className="rounded-[var(--radius-lg)] bg-[var(--color-surface)] px-6 py-10 text-center text-sm text-[var(--color-text-muted)]">
+                Track catalog is currently unavailable.
+              </div>
             ) : hasEmptySearch ? (
               <EmptySearch
                 query={searchQuery}
