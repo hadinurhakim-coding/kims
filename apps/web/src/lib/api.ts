@@ -13,6 +13,7 @@ export type APITrack = {
   license_label: Track["licenseLabel"];
   cover_url: string;
   audio_url: string;
+  is_published?: boolean;
 };
 
 export type APIListTracksResponse = {
@@ -92,7 +93,10 @@ export async function apiRequest<T>(
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  if (options.body && !headers.has("Content-Type")) {
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  if (options.body && !isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 

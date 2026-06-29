@@ -23,6 +23,8 @@ build/
 .cache/
 coverage/
 coverage.out
+playwright-report/
+test-results/
 *.tsbuildinfo
 *.test
 bin/

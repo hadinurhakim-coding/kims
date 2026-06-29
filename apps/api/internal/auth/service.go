@@ -143,7 +143,7 @@ func (s *Service) Logout(ctx context.Context, userID string, _ string) error {
 }
 
 func (s *Service) issueTokens(ctx context.Context, user *User) (*AuthResponse, error) {
-	accessToken, err := generateAccessToken(user.ID, user.Email)
+	accessToken, err := generateAccessToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		return nil, fmt.Errorf("generate access token: %w", err)
 	}
@@ -170,15 +170,19 @@ func (s *Service) issueTokens(ctx context.Context, user *User) (*AuthResponse, e
 	}, nil
 }
 
-func generateAccessToken(userID string, email string) (string, error) {
+func generateAccessToken(userID string, email string, role string) (string, error) {
 	secret := os.Getenv("JWT_ACCESS_SECRET")
 	if secret == "" {
 		return "", errors.New("JWT_ACCESS_SECRET is required")
+	}
+	if role == "" {
+		role = "user"
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,
+		"role":    role,
 		"exp":     time.Now().Add(accessTokenTTL).Unix(),
 	})
 

@@ -8,6 +8,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/audit"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/auth"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/email"
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/favorites"
@@ -31,6 +32,7 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 	router := &Router{dbConn: dbConn}
 	r := chi.NewRouter()
 
+	r.Use(appmiddleware.CORSFromEnv())
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
 
@@ -51,7 +53,8 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 			email.NewService(),
 		),
 	)
-	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn), storageService))
+	auditRepo := audit.NewRepository(rtr.dbConn)
+	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn), storageService), auditRepo)
 	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn), storageService))
 	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn), storageService))
 	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn), storageService))
@@ -72,8 +75,6 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 
 			r.Post("/auth/logout", authHandler.Logout)
 
-			r.Post("/tracks", tracksHandler.Create)
-
 			r.Get("/favorites", favoritesHandler.List)
 			r.Post("/favorites", favoritesHandler.Add)
 			r.Delete("/favorites/{trackID}", favoritesHandler.Remove)
@@ -89,6 +90,19 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 			r.Post("/history", historyHandler.Record)
 			r.Delete("/history", historyHandler.Clear)
 			r.Delete("/history/{entryID}", historyHandler.Remove)
+
+			r.Group(func(r chi.Router) {
+				r.Use(appmiddleware.RequireAdmin)
+
+				r.Post("/tracks", tracksHandler.Create)
+				r.Route("/admin", func(r chi.Router) {
+					r.Get("/tracks", tracksHandler.ListAdmin)
+					r.Post("/tracks", tracksHandler.Create)
+					r.Put("/tracks/{id}", tracksHandler.Update)
+					r.Delete("/tracks/{id}", tracksHandler.Delete)
+					r.Post("/uploads", tracksHandler.Upload)
+				})
+			})
 		})
 	})
 }

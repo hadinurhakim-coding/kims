@@ -18,6 +18,7 @@ const routeTitles: Record<string, string> = {
   "/favorites": "Favorites",
   "/playlists": "Playlists",
   "/history": "History",
+  "/admin": "Admin",
 };
 
 export function TopBar({ searchQuery = "", onSearch }: TopBarProps) {

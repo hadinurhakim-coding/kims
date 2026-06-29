@@ -26,7 +26,7 @@ func (r *Repository) CreateUser(
 	const query = `
 		INSERT INTO users (name, email, password)
 		VALUES ($1, $2, $3)
-		RETURNING id, name, email, created_at, updated_at
+		RETURNING id, name, email, role, created_at, updated_at
 	`
 
 	var user User
@@ -40,6 +40,7 @@ func (r *Repository) CreateUser(
 		&user.ID,
 		&user.Name,
 		&user.Email,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {
@@ -51,7 +52,7 @@ func (r *Repository) CreateUser(
 
 func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	const query = `
-		SELECT id, name, email, password, created_at, updated_at
+		SELECT id, name, email, role, password, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
@@ -61,6 +62,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 		&user.ID,
 		&user.Name,
 		&user.Email,
+		&user.Role,
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -73,7 +75,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 
 func (r *Repository) GetUserByID(ctx context.Context, id string) (*User, error) {
 	const query = `
-		SELECT id, name, email, created_at, updated_at
+		SELECT id, name, email, role, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -83,6 +85,7 @@ func (r *Repository) GetUserByID(ctx context.Context, id string) (*User, error) 
 		&user.ID,
 		&user.Name,
 		&user.Email,
+		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {

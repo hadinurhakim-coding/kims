@@ -9,6 +9,7 @@
   "scripts": {
     "web:dev": "npm run dev --workspace @kims/web",
     "web:build": "npm run build --workspace @kims/web",
+    "web:e2e": "npm run e2e --workspace @kims/web",
     "web:lint": "npm run lint --workspace @kims/web",
     "web:typecheck": "npm run typecheck --workspace @kims/web",
     "web:test": "npm run test --workspace @kims/web"

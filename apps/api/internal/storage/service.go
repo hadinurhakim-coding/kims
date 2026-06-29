@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,6 +16,29 @@ import (
 )
 
 const defaultSignedURLTTLSeconds = 3600
+
+var ErrNotConfigured = errors.New("storage is not configured")
+var ErrInvalidObjectPath = errors.New("invalid storage object path")
+
+type UploadTarget string
+
+const (
+	UploadTargetAudio UploadTarget = "audio"
+	UploadTargetCover UploadTarget = "cover"
+)
+
+type UploadRequest struct {
+	Target      UploadTarget
+	Path        string
+	ContentType string
+	Body        io.Reader
+	Upsert      bool
+}
+
+type UploadResult struct {
+	Path      string
+	PublicURL string
+}
 
 type Service struct {
 	supabaseURL    string
@@ -123,6 +148,89 @@ func (s *Service) ResolveAudioURL(ctx context.Context, value string) (string, er
 	return s.supabaseURL + "/storage/v1/" + signedURL, nil
 }
 
+func (s *Service) UploadObject(ctx context.Context, req UploadRequest) (*UploadResult, error) {
+	if s == nil || s.supabaseURL == "" || s.serviceRoleKey == "" {
+		return nil, ErrNotConfigured
+	}
+	if req.Body == nil {
+		return nil, ErrInvalidObjectPath
+	}
+
+	bucket, err := s.bucketForTarget(req.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	objectPath := normalizeObjectPath(req.Path)
+	if objectPath == "" {
+		return nil, ErrInvalidObjectPath
+	}
+
+	endpoint := fmt.Sprintf(
+		"%s/storage/v1/object/%s/%s",
+		s.supabaseURL,
+		url.PathEscape(bucket),
+		escapeObjectPath(objectPath),
+	)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("create upload request: %w", err)
+	}
+
+	contentType := strings.TrimSpace(req.ContentType)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+s.serviceRoleKey)
+	httpReq.Header.Set("apikey", s.serviceRoleKey)
+	httpReq.Header.Set("Content-Type", contentType)
+	if req.Upsert {
+		httpReq.Header.Set("x-upsert", "true")
+	}
+
+	client := s.httpClient
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	res, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("upload storage object: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 300 {
+		var errBody map[string]any
+		_ = json.NewDecoder(res.Body).Decode(&errBody)
+		return nil, fmt.Errorf("upload storage object status=%d body=%v", res.StatusCode, errBody)
+	}
+
+	result := &UploadResult{Path: objectPath}
+	if req.Target == UploadTargetCover {
+		result.PublicURL = s.ResolveCoverURL(objectPath)
+	}
+
+	return result, nil
+}
+
+func (s *Service) bucketForTarget(target UploadTarget) (string, error) {
+	switch target {
+	case UploadTargetAudio:
+		if s.audioBucket == "" {
+			return "", ErrNotConfigured
+		}
+		return s.audioBucket, nil
+	case UploadTargetCover:
+		if s.coversBucket == "" {
+			return "", ErrNotConfigured
+		}
+		return s.coversBucket, nil
+	default:
+		return "", ErrInvalidObjectPath
+	}
+}
+
 func getenvDefault(key, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -146,4 +254,17 @@ func escapeObjectPath(path string) string {
 	}
 
 	return strings.Join(parts, "/")
+}
+
+func normalizeObjectPath(path string) string {
+	path = strings.Trim(strings.ReplaceAll(path, "\\", "/"), "/")
+	if path == "" ||
+		strings.Contains(path, "../") ||
+		strings.Contains(path, "/..") ||
+		path == ".." ||
+		strings.Contains(path, "//") {
+		return ""
+	}
+
+	return path
 }

@@ -19,7 +19,10 @@ func NewRepository(dbConn *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) List(ctx context.Context, params ListParams) ([]Track, int, error) {
-	conditions := []string{"is_published = true"}
+	conditions := []string{"TRUE"}
+	if !params.IncludeDrafts {
+		conditions = []string{"is_published = true"}
+	}
 	args := []any{}
 
 	if params.Type != "" {
@@ -176,6 +179,70 @@ func (r *Repository) Create(ctx context.Context, req CreateRequest, isPublished 
 	}
 
 	return &track, nil
+}
+
+func (r *Repository) Update(ctx context.Context, id string, req CreateRequest, isPublished bool) (*Track, error) {
+	query := `
+		UPDATE tracks
+		SET
+			title = $2,
+			type = $3,
+			mood = $4,
+			sfx_category = $5,
+			duration = $6,
+			license_label = $7,
+			cover_url = $8,
+			audio_url = $9,
+			is_published = $10,
+			updated_at = NOW()
+		WHERE id = $1
+		RETURNING
+			id,
+			title,
+			type,
+			mood,
+			sfx_category,
+			duration,
+			license_label,
+			cover_url,
+			audio_url,
+			is_published,
+			created_at,
+			updated_at
+	`
+
+	track, err := scanTrack(r.dbConn.QueryRow(
+		ctx,
+		query,
+		id,
+		req.Title,
+		req.Type,
+		req.Mood,
+		req.SFXCategory,
+		req.Duration,
+		req.LicenseLabel,
+		req.CoverURL,
+		req.AudioURL,
+		isPublished,
+	))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("update track: %w", err)
+	}
+
+	return &track, nil
+}
+
+func (r *Repository) Delete(ctx context.Context, id string) (bool, error) {
+	tag, err := r.dbConn.Exec(ctx, `DELETE FROM tracks WHERE id = $1`, id)
+	if err != nil {
+		return false, fmt.Errorf("delete track: %w", err)
+	}
+
+	return tag.RowsAffected() > 0, nil
 }
 
 type trackScanner interface {

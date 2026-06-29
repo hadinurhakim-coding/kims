@@ -27,6 +27,15 @@ func NewService(repo *Repository, storageSvc ...*storage.Service) *Service {
 }
 
 func (s *Service) List(ctx context.Context, params ListParams) (*ListResponse, error) {
+	return s.list(ctx, params, true)
+}
+
+func (s *Service) ListAdmin(ctx context.Context, params ListParams) (*ListResponse, error) {
+	params.IncludeDrafts = true
+	return s.list(ctx, params, false)
+}
+
+func (s *Service) list(ctx context.Context, params ListParams, resolveMedia bool) (*ListResponse, error) {
 	if params.Limit < 1 {
 		params.Limit = 50
 	}
@@ -41,8 +50,10 @@ func (s *Service) List(ctx context.Context, params ListParams) (*ListResponse, e
 	if err != nil {
 		return nil, err
 	}
-	if err := s.resolveTracks(ctx, items); err != nil {
-		return nil, err
+	if resolveMedia {
+		if err := s.resolveTracks(ctx, items); err != nil {
+			return nil, err
+		}
 	}
 
 	return &ListResponse{
@@ -73,6 +84,92 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Track, error) {
 }
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*Track, error) {
+	normalized, isPublished, err := normalizeTrackRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	track, err := s.repo.Create(ctx, normalized, isPublished)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.resolveTrack(ctx, track); err != nil {
+		return nil, err
+	}
+
+	return track, nil
+}
+
+func (s *Service) Update(ctx context.Context, id string, req CreateRequest) (*Track, error) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return nil, ErrNotFound
+	}
+
+	normalized, isPublished, err := normalizeTrackRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	track, err := s.repo.Update(ctx, id, normalized, isPublished)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, ErrNotFound
+	}
+	if err := s.resolveTrack(ctx, track); err != nil {
+		return nil, err
+	}
+
+	return track, nil
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return ErrNotFound
+	}
+
+	deleted, err := s.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !deleted {
+		return ErrNotFound
+	}
+
+	return nil
+}
+
+func (s *Service) UploadMedia(ctx context.Context, req UploadRequest) (*UploadResponse, error) {
+	if s.storage == nil {
+		return nil, storage.ErrNotConfigured
+	}
+
+	target, err := uploadTargetFromKind(req.Kind)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.storage.UploadObject(ctx, storage.UploadRequest{
+		Target:      target,
+		Path:        req.Path,
+		ContentType: req.ContentType,
+		Body:        req.Body,
+		Upsert:      req.Upsert,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UploadResponse{
+		Path:      result.Path,
+		PublicURL: result.PublicURL,
+	}, nil
+}
+
+func normalizeTrackRequest(req CreateRequest) (CreateRequest, bool, error) {
 	req.Title = strings.TrimSpace(req.Title)
 	req.Type = strings.TrimSpace(req.Type)
 	req.Mood = strings.TrimSpace(req.Mood)
@@ -96,7 +193,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*Track, error)
 		req.LicenseLabel == "" ||
 		req.CoverURL == "" ||
 		req.AudioURL == "" {
-		return nil, ErrInvalidInput
+		return CreateRequest{}, false, ErrInvalidInput
 	}
 
 	isPublished := true
@@ -104,15 +201,18 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*Track, error)
 		isPublished = *req.IsPublished
 	}
 
-	track, err := s.repo.Create(ctx, req, isPublished)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.resolveTrack(ctx, track); err != nil {
-		return nil, err
-	}
+	return req, isPublished, nil
+}
 
-	return track, nil
+func uploadTargetFromKind(kind string) (storage.UploadTarget, error) {
+	switch strings.ToLower(strings.TrimSpace(kind)) {
+	case "audio":
+		return storage.UploadTargetAudio, nil
+	case "cover":
+		return storage.UploadTargetCover, nil
+	default:
+		return "", ErrInvalidInput
+	}
 }
 
 func (s *Service) resolveTracks(ctx context.Context, tracks []Track) error {

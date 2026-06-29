@@ -259,7 +259,7 @@ export default function PlaylistDetailPage() {
                       return track ? (
                         <Image
                           key={track.id}
-                          src="/placeholder-cover.png"
+                          src={track.cover}
                           alt=""
                           width={120}
                           height={120}

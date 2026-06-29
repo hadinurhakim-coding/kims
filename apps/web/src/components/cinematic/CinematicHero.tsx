@@ -24,7 +24,7 @@ export function CinematicHero({
   return (
     <section className="relative h-[320px] w-full overflow-hidden rounded-[var(--radius-lg)]">
       <Image
-        src="/placeholder-cover.png"
+        src={track.cover}
         alt=""
         fill
         sizes="(min-width: 1024px) 900px, 100vw"

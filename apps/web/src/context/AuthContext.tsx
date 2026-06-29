@@ -26,6 +26,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
+  role?: "user" | "admin";
 };
 
 export type LoginPayload = {
@@ -91,6 +92,10 @@ async function requestAuth(path: string, payload: unknown) {
   return (await response.json()) as AuthResponse;
 }
 
+async function requestRefresh(refreshToken: string) {
+  return requestAuth("/auth/refresh", { refresh_token: refreshToken });
+}
+
 async function requestJSON<T>(path: string, payload: unknown, fallback: string) {
   const response = await fetch(`${apiBasePath}${path}`, {
     method: "POST",
@@ -143,37 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      try {
-        localStorage.removeItem(legacyMockStorageKey);
-
-        const storedAccessToken = localStorage.getItem(accessTokenKey);
-        const storedUser = localStorage.getItem(userKey);
-
-        if (!storedAccessToken || !storedUser || !isTokenUsable(storedAccessToken)) {
-          clearStoredAuth();
-          setIsAuthenticated(false);
-          setUser(null);
-          setAccessToken(null);
-          return;
-        }
-
-        setAccessToken(storedAccessToken);
-        setUser(JSON.parse(storedUser) as AuthUser);
-        setIsAuthenticated(true);
-      } catch {
-        setIsAuthenticated(false);
-        setUser(null);
-        setAccessToken(null);
-      } finally {
-        setHasLoaded(true);
-      }
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
   const persistAuth = useCallback((auth: AuthResponse) => {
     setIsAuthenticated(true);
     setUser(auth.user);
@@ -187,6 +161,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Ignore unavailable storage.
     }
   }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void syncStoredAuth();
+    }, 0);
+
+    async function syncStoredAuth() {
+      try {
+        localStorage.removeItem(legacyMockStorageKey);
+
+        const storedAccessToken = localStorage.getItem(accessTokenKey);
+        const storedRefreshToken = localStorage.getItem(refreshTokenKey);
+        const storedUser = localStorage.getItem(userKey);
+
+        if (!storedAccessToken || !storedUser || !isTokenUsable(storedAccessToken)) {
+          clearStoredAuth();
+          setIsAuthenticated(false);
+          setUser(null);
+          setAccessToken(null);
+          return;
+        }
+
+        if (storedRefreshToken) {
+          try {
+            persistAuth(await requestRefresh(storedRefreshToken));
+            return;
+          } catch {
+            // Fall back to the still-usable access token below.
+          }
+        }
+
+        setAccessToken(storedAccessToken);
+        setUser(JSON.parse(storedUser) as AuthUser);
+        setIsAuthenticated(true);
+      } catch {
+        setIsAuthenticated(false);
+        setUser(null);
+        setAccessToken(null);
+      } finally {
+        setHasLoaded(true);
+      }
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [persistAuth]);
 
   const login = useCallback(
     async (payload: LoginPayload) => {

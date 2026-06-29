@@ -1,6 +1,9 @@
 package tracks
 
-import "time"
+import (
+	"io"
+	"time"
+)
 
 type Track struct {
 	ID           string    `json:"id"`
@@ -18,13 +21,14 @@ type Track struct {
 }
 
 type ListParams struct {
-	Type         string
-	Mood         string
-	SFXCategory  string
-	LicenseLabel string
-	Search       string
-	Limit        int
-	Offset       int
+	Type          string
+	Mood          string
+	SFXCategory   string
+	LicenseLabel  string
+	Search        string
+	IncludeDrafts bool
+	Limit         int
+	Offset        int
 }
 
 type ListResponse struct {
@@ -44,4 +48,17 @@ type CreateRequest struct {
 	CoverURL     string  `json:"cover_url"`
 	AudioURL     string  `json:"audio_url"`
 	IsPublished  *bool   `json:"is_published,omitempty"`
+}
+
+type UploadRequest struct {
+	Kind        string
+	Path        string
+	ContentType string
+	Body        io.Reader
+	Upsert      bool
+}
+
+type UploadResponse struct {
+	Path      string `json:"path"`
+	PublicURL string `json:"public_url,omitempty"`
 }

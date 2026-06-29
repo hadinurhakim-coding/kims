@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "next dev",
+    "e2e": "playwright test",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -20,6 +21,7 @@
     "wavesurfer.js": "^7.12.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

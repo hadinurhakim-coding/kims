@@ -15,6 +15,7 @@ type contextKey string
 const (
 	UserIDKey    contextKey = "user_id"
 	UserEmailKey contextKey = "user_email"
+	UserRoleKey  contextKey = "user_role"
 )
 
 func GetUserID(ctx context.Context) (string, bool) {
@@ -25,6 +26,11 @@ func GetUserID(ctx context.Context) (string, bool) {
 func GetUserEmail(ctx context.Context) (string, bool) {
 	email, ok := ctx.Value(UserEmailKey).(string)
 	return email, ok
+}
+
+func GetUserRole(ctx context.Context) (string, bool) {
+	role, ok := ctx.Value(UserRoleKey).(string)
+	return role, ok
 }
 
 func RequireAuth(next http.Handler) http.Handler {
@@ -84,16 +90,35 @@ func RequireAuth(next http.Handler) http.Handler {
 
 		userID, _ := claims["user_id"].(string)
 		email, _ := claims["email"].(string)
+		role, _ := claims["role"].(string)
 		if userID == "" {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{
 				"error": "invalid claims",
 			})
 			return
 		}
+		if role == "" {
+			role = "user"
+		}
 
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		ctx = context.WithValue(ctx, UserEmailKey, email)
+		ctx = context.WithValue(ctx, UserRoleKey, role)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func RequireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		role, ok := GetUserRole(r.Context())
+		if !ok || role != "admin" {
+			writeJSON(w, http.StatusForbidden, map[string]string{
+				"error": "admin access required",
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

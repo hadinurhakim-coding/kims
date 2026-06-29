@@ -22,12 +22,14 @@ Last updated: 2026-06-29
 - [x] Forgot-password uses Brevo REST API OTP flow with 3-step frontend reset.
 - [x] Explore uses a dynamic "Recommended For You" hero with a hybrid score from listening history, favorites, track metadata, recency, and current playback context.
 - [x] Recommended hero explains why a track is suggested and falls back gracefully when there are no personal signals.
-- [x] History now exposes one entry per track, accumulates its play count, and removes existing duplicate history records when a track is played again.
+- [x] History now groups plays by track, Jakarta day, and session bucket, accumulates play counts, and records reliably after migration version 14.
+- [x] Global playback uses a native audio element for reliable track switching while waveform components remain available for visualization.
 - [x] Bottom player is compact and Explore content is visually verified so catalog items are not hidden behind it on desktop or mobile.
 - [x] App scrolling disables elastic overscroll at page and panel boundaries.
-- [~] Seeded catalog is partially connected to Supabase Storage; active tracks can use public cover paths and private signed audio paths, but full catalog migration is not complete.
+- [x] Production smoke test passed for homepage, tracks, auth, forgot password, playback, favorites, playlists, and history.
+- [~] Published catalog media is storage-backed; legacy placeholder seed rows are unpublished, while full bucket inventory verification is still needed.
 - [~] CI exists for frontend lint/typecheck/build and backend tests.
-- [ ] Admin upload/content management is not implemented.
+- [x] Admin/content management has role guards, upload, track mutation APIs, admin UI, publish toggles, and audit logs.
 - [ ] Real production launch hardening is not complete.
 
 ## Frontend And UI/UX
@@ -57,14 +59,16 @@ Last updated: 2026-06-29
   - [x] Playlist list/detail UI is implemented and backed by API context.
 - [x] Step 8 - History page
   - [x] History UI is implemented and backed by API context.
-  - [x] Repeated plays of the same track are consolidated into a single visible history entry with an aggregated play count.
+  - [x] Repeated plays of the same track are consolidated by track/day/session with an aggregated play count.
+  - [x] Today session buckets no longer duplicate into the "Earlier This Week" aggregate.
 - [x] Step 9 - Auth UI
   - [x] Login and register pages are implemented.
   - [x] Forgot password uses a 3-step flow: email -> OTP -> new password.
-- [x] Step 10 - Wavesurfer.js audio integration
-  - [x] AudioContext initializes Wavesurfer and loads the active track audio source.
+- [x] Step 10 - Audio playback integration
+  - [x] AudioContext uses a native HTML audio element to load, play, pause, seek, set volume, and switch active tracks.
   - [x] Browser media autoplay restrictions are handled so `NotAllowedError` and expected playback interruptions do not crash the UI.
   - [x] It can stream signed private Supabase audio URLs returned by the API.
+  - [x] Manual browser testing confirmed first-track playback and switching to another track works.
 
 ## Backend
 
@@ -79,10 +83,11 @@ Last updated: 2026-06-29
   - [x] 11.8 Favorites domain exists.
   - [x] 11.9 Playlists domain exists.
   - [x] 11.10 History domain exists.
-  - [x] History repository deduplicates repeated track records per user, preserving the newest playback time and total play count.
+  - [x] History repository buckets records by user, track, Jakarta day, and session label.
+  - [x] History recording uses a transaction and advisory lock so play recording does not depend on an already-present unique index during schema catch-up.
   - [x] 11.11 Routes are wired under `/api/v1`.
   - [x] 11.12 Frontend mock auth has been replaced with real API auth.
-  - [~] Auth is MVP-level: email verification, current-user endpoint, admin roles, and HttpOnly refresh cookies are still pending.
+  - [~] Auth is MVP-level: email verification, current-user endpoint, admin management UI, and HttpOnly refresh cookies are still pending.
 
 ## Forgot Password With Brevo
 
@@ -99,12 +104,16 @@ Last updated: 2026-06-29
 
 ## Database
 
-- [x] Migrations 001-007 exist.
-- [x] Tables covered by migrations include users, tracks, favorites, playlists, playlist_tracks, history, refresh_tokens, and schema_migrations.
+- [x] Migrations 001-017 exist.
+- [x] Tables covered by migrations include users, tracks, favorites, playlists, playlist_tracks, history, refresh_tokens, password_resets, and schema_migrations.
 - [x] Seed migration 007 inserts 40 catalog tracks.
 - [x] Migration 008 creates `password_resets` for OTP-based forgot password.
-- [~] Seed data is mixed: older seed rows use local placeholder paths, while current active tracks can use Supabase Storage object paths.
-- [!] Supabase production migration state must be checked externally with `go run ./cmd/migrate -direction=up` and the Supabase table editor.
+- [x] Migrations 013-014 add history play bucket columns and the unique history bucket index.
+- [x] Migration 015 adds user roles for admin authorization.
+- [x] Migration 016 creates admin audit logs.
+- [x] Migration 017 unpublishes tracks that still point at local placeholder media.
+- [~] Seed data keeps legacy placeholder rows for rollback/dev history, but public catalog and playlist joins use storage-backed published tracks.
+- [x] Supabase production migration state was verified through the successful production history smoke test.
 
 ## Storage
 
@@ -113,18 +122,18 @@ Last updated: 2026-06-29
   - [x] 12.2 Backend resolves public cover object paths to Supabase public URLs.
   - [x] 12.3 Backend resolves private audio object paths to signed Supabase URLs.
   - [x] 12.4 Frontend consumes resolved `cover_url` and `audio_url` from the API.
-  - [~] 12.5 Real cover/audio assets exist in Supabase buckets, but full catalog path migration still needs verification.
+  - [~] 12.5 Published catalog and playlist media use Supabase-backed paths; full bucket inventory verification is still pending.
   - [~] 12.6 Signed URL generation is covered by backend tests; refresh-on-expiry during a long listening session is still a follow-up.
 
 ## Admin And Content
 
-- [ ] Step 13 - Admin track management
-  - [ ] 13.1 Add an admin role to users and enforce role checks.
-  - [ ] 13.2 Add admin-only upload endpoint.
-  - [ ] 13.3 Add track create/update/delete API.
-  - [ ] 13.4 Add admin UI for track upload and metadata management.
-  - [ ] Add audit logs for admin actions.
-  - [ ] Add publish/unpublish workflow.
+- [x] Step 13 - Admin track management
+  - [x] 13.1 Add an admin role to users and enforce role checks.
+  - [x] 13.2 Add admin-only upload endpoint.
+  - [x] 13.3 Add track create/update/delete API.
+  - [x] 13.4 Add admin UI for track upload and metadata management.
+  - [x] Add audit logs for admin actions.
+  - [x] Add publish/unpublish workflow.
 
 ## Analytics And Monitoring
 
@@ -142,7 +151,7 @@ Last updated: 2026-06-29
   - [x] 15.1 GitHub Actions workflow exists for web lint, web typecheck, web build, and API tests.
   - [x] 15.2 Frontend Vercel deployment config exists through the Next.js app and rewrite proxy.
   - [x] 15.3 Backend Vercel Go Runtime config exists.
-  - [!] 15.4 Production environment variables must be verified in the Vercel dashboard.
+  - [x] 15.4 Production environment variables are verified for the smoke-tested flows.
   - [!] 15.5 Branch protection rules are configured in GitHub UI, not tracked in the repo.
   - [~] Frontend `npm test` is still a placeholder and does not run real frontend tests.
 
@@ -168,7 +177,7 @@ Last updated: 2026-06-29
 - [ ] Step 18 - Pre-launch checklist
   - [ ] 18.1 Custom domain setup.
   - [!] 18.2 SSL certificate verification.
-  - [ ] 18.3 Backend CORS configuration.
+  - [x] 18.3 Backend CORS configuration.
   - [ ] 18.4 API rate limiting.
   - [ ] 18.5 Security headers for Next.js.
   - [ ] 18.6 Privacy policy page.
@@ -176,7 +185,7 @@ Last updated: 2026-06-29
   - [ ] 18.8 Cookie consent decision and implementation if needed.
 
 - [ ] Step 19 - Launch
-  - [ ] 19.1 Final smoke test.
+  - [x] 19.1 Final smoke test passed for the current production app.
   - [ ] 19.2 DNS propagation verification.
   - [ ] 19.3 Monitoring dashboards live.
   - [ ] 19.4 Social media announcement.
@@ -210,7 +219,7 @@ Last updated: 2026-06-29
 - [x] `POST /api/v1/auth/forgot-password`
 - [x] `POST /api/v1/auth/verify-otp`
 - [x] `POST /api/v1/auth/reset-password`
-- [ ] Admin API routes
+- [x] Admin API routes: `POST /api/v1/tracks` is admin-protected, and `/api/v1/admin/tracks` plus `/api/v1/admin/uploads` cover admin list/create/update/delete/upload flows.
 - [ ] Signed asset URL routes
 - [ ] Download tracking route
 
@@ -219,30 +228,29 @@ Last updated: 2026-06-29
 - [x] Backend JWT middleware tests exist.
 - [x] Backend router tests exist.
 - [x] Backend history repository integration test covers duplicate consolidation, aggregate play counts, and remove-by-track behavior.
+- [x] History record/list flow was manually smoke-tested in the side browser with API logs showing `POST /api/v1/history` returning `201`.
+- [x] Production smoke test passed for homepage, Explore tracks, register, logout, login, forgot/reset password, playback switching, bottom-player controls, volume, seek, favorites, playlists, history counts, remove history, and clear history.
 - [x] Backend storage unit tests cover public cover URL resolution and private audio signed URL generation.
 - [~] Backend domain tests for auth, tracks, favorites, playlists, and broader history flows are not complete.
 - [x] GitHub Actions runs `go test ./...` for the API.
 - [x] GitHub Actions runs web lint, typecheck, and build.
 - [~] Frontend has no real unit/component test suite yet.
-- [ ] E2E smoke tests are not implemented.
+- [x] E2E smoke tests exist for register/login, public catalog/playback switching, forgot-password request, favorites, playlists, and history.
 - [ ] Accessibility audit is not complete.
 
 ## Recommended Next Order
 
-1. Verify production environment variables in Vercel for both web and API.
-2. Run a production smoke test for register, login, forgot password, tracks, favorites, playlists, and history.
-3. Complete Step 12 by moving audio and covers to Supabase Storage.
-4. Complete Step 13 so admins can upload and manage tracks without manual SQL.
-5. Harden launch requirements: CORS, rate limiting, security headers, privacy/terms pages, sitemap, and robots.txt.
-6. Add real frontend tests and E2E smoke tests.
-7. Run Lighthouse/Core Web Vitals audit before public launch.
+1. Continue launch hardening with rate limiting, security headers, privacy/terms pages, sitemap, and robots.txt.
+2. Verify production Sentry/Umami dashboards and branch protection settings.
+3. Run Lighthouse/Core Web Vitals and accessibility audits before public launch.
 
 ## Known Risks Before Launch
 
-- Real catalog media is not yet stored in Supabase Storage.
+- Legacy placeholder seed rows remain in migration history but are unpublished by migration 017.
 - API migrations are skipped automatically in production unless `RUN_MIGRATIONS=true`; schema changes should be applied intentionally.
 - Refresh tokens are API-managed but not yet delivered through HttpOnly Secure cookies.
-- No admin role or admin UI exists yet.
+- Admin audit logs require migration 016 to be applied before admin content changes in production.
+- Production API CORS requires `WEB_ORIGINS` to include the final KIMS frontend domain.
 - No rate limiting exists yet.
 - No privacy policy or terms pages exist yet.
 - Production analytics and monitoring require external dashboard verification.

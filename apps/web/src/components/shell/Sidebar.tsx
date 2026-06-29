@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Music,
   Music2,
+  ShieldCheck,
   Sparkles,
   UserCircle2,
   Waves,
@@ -64,6 +65,16 @@ export function Sidebar() {
   const { playlists } = usePlaylists();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const visibleSections =
+    user?.role === "admin"
+      ? [
+          ...sections,
+          {
+            label: "ADMIN",
+            items: [{ label: "Admin", href: "/admin", icon: ShieldCheck }],
+          },
+        ]
+      : sections;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -116,7 +127,7 @@ export function Sidebar() {
       </Link>
 
       <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto pr-1 [mask-image:linear-gradient(to_bottom,black_calc(100%_-_24px),transparent_100%)]">
-        {sections.slice(0, 2).map((section) => (
+        {visibleSections.map((section) => (
           <section key={section.label}>
             <h2 className="mb-3 px-3 text-xs font-semibold tracking-wide text-[var(--color-text-muted)]">
               {section.label}
