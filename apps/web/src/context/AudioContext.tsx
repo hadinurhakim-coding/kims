@@ -12,7 +12,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import WaveSurfer from "wavesurfer.js";
 
 export interface AudioContextValue {
   currentTrack: Track | null;
@@ -46,9 +45,9 @@ function isExpectedPlaybackInterruption(error: unknown) {
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const { recordPlay } = useHistory();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const waveSurferRef = useRef<WaveSurfer | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTrackRef = useRef<Track | null>(null);
+  const playRequestRef = useRef(0);
   const volumeRef = useRef(0.8);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -62,68 +61,90 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, [currentTrack]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !containerRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    const waveSurfer = WaveSurfer.create({
-      container: containerRef.current,
-      waveColor: "transparent",
-      progressColor: "transparent",
-      height: 0,
-      barWidth: 0,
-    });
+    const audioElement = audio;
+    audioElement.volume = volumeRef.current;
 
-    waveSurfer.setVolume(volumeRef.current);
-    waveSurferRef.current = waveSurfer;
-
-    waveSurfer.on("ready", () => {
-      setDuration(waveSurfer.getDuration());
+    function handleLoadedMetadata() {
+      setDuration(
+        Number.isFinite(audioElement.duration) ? audioElement.duration : 0,
+      );
       setIsReady(true);
-    });
+    }
 
-    waveSurfer.on("audioprocess", () => {
-      setCurrentTime(waveSurfer.getCurrentTime());
-    });
+    function handleTimeUpdate() {
+      setCurrentTime(audioElement.currentTime);
+    }
 
-    waveSurfer.on("finish", () => {
+    function handlePlay() {
+      setIsPlaying(true);
+    }
+
+    function handlePause() {
+      setIsPlaying(false);
+    }
+
+    function handleEnded() {
       setIsPlaying(false);
       setCurrentTime(0);
-    });
+    }
 
-    waveSurfer.on("error", (error) => {
+    function handleError() {
       setIsReady(false);
+      setIsPlaying(false);
+      console.warn("Audio playback error", audioElement.error);
+    }
 
-      if (!isExpectedPlaybackInterruption(error)) {
-        console.warn("WaveSurfer error", error);
-      }
-    });
+    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audioElement.addEventListener("durationchange", handleLoadedMetadata);
+    audioElement.addEventListener("timeupdate", handleTimeUpdate);
+    audioElement.addEventListener("play", handlePlay);
+    audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("ended", handleEnded);
+    audioElement.addEventListener("error", handleError);
 
     return () => {
-      waveSurfer.destroy();
-      waveSurferRef.current = null;
+      audioElement.pause();
+      audioElement.removeAttribute("src");
+      audioElement.load();
+      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audioElement.removeEventListener("durationchange", handleLoadedMetadata);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElement.removeEventListener("play", handlePlay);
+      audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("ended", handleEnded);
+      audioElement.removeEventListener("error", handleError);
     };
   }, []);
 
-  const playWaveSurfer = useCallback(async (waveSurfer: WaveSurfer) => {
+  const playAudio = useCallback(async (audio: HTMLAudioElement) => {
     try {
-      await waveSurfer.play();
+      await audio.play();
       setIsPlaying(true);
+      return true;
     } catch (error) {
       setIsPlaying(false);
 
       if (!isExpectedPlaybackInterruption(error)) {
-        console.warn("WaveSurfer play was interrupted", error);
+        console.warn("Audio play was interrupted", error);
       }
+
+      return false;
     }
   }, []);
 
   const playTrack = useCallback(
     (track: Track) => {
-      const waveSurfer = waveSurferRef.current;
+      const audio = audioRef.current;
+      const playRequest = playRequestRef.current + 1;
+      playRequestRef.current = playRequest;
 
-      if (!waveSurfer) return;
+      if (!audio) return;
 
       if (currentTrackRef.current?.id === track.id) {
-        void playWaveSurfer(waveSurfer);
+        void playAudio(audio);
         return;
       }
 
@@ -132,56 +153,58 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setIsPlaying(false);
       setDuration(0);
       setCurrentTime(0);
+
       if (!isPlayableAudioSource(track.audioSrc)) {
-        setIsReady(false);
         return;
       }
 
-      void waveSurfer
-        .load(track.audioSrc)
-        .then(() => {
-          void recordPlay(track.id);
-        })
-        .catch(() => {
-          setIsReady(false);
-          setIsPlaying(false);
-        });
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = track.audioSrc;
+      audio.load();
 
-      void playWaveSurfer(waveSurfer);
+      void playAudio(audio).then((didPlay) => {
+        if (didPlay && playRequestRef.current === playRequest) {
+          void recordPlay(track.id);
+        }
+      });
     },
-    [playWaveSurfer, recordPlay],
+    [playAudio, recordPlay],
   );
 
   const togglePlayPause = useCallback(() => {
-    const waveSurfer = waveSurferRef.current;
+    const audio = audioRef.current;
 
-    if (!waveSurfer || !isReady) return;
+    if (!audio || !isReady) return;
 
-    if (waveSurfer.isPlaying()) {
-      waveSurfer.pause();
-      setIsPlaying(false);
+    if (!audio.paused) {
+      audio.pause();
       return;
     }
 
-    void playWaveSurfer(waveSurfer);
-  }, [isReady, playWaveSurfer]);
+    void playAudio(audio);
+  }, [isReady, playAudio]);
 
   const setVolume = useCallback((nextVolume: number) => {
     const normalizedVolume = Math.min(1, Math.max(0, nextVolume));
 
     setVolumeState(normalizedVolume);
     volumeRef.current = normalizedVolume;
-    waveSurferRef.current?.setVolume(normalizedVolume);
+
+    if (audioRef.current) {
+      audioRef.current.volume = normalizedVolume;
+    }
   }, []);
 
   const seek = useCallback(
     (seconds: number) => {
-      const waveSurfer = waveSurferRef.current;
+      const audio = audioRef.current;
 
-      if (!waveSurfer || !isReady || duration <= 0) return;
+      if (!audio || !isReady || duration <= 0) return;
 
-      waveSurfer.seekTo(Math.min(1, Math.max(0, seconds / duration)));
-      setCurrentTime(seconds);
+      const nextTime = Math.min(duration, Math.max(0, seconds));
+      audio.currentTime = nextTime;
+      setCurrentTime(nextTime);
     },
     [duration, isReady],
   );
@@ -216,7 +239,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   return (
     <AudioContext.Provider value={value}>
       {children}
-      <div ref={containerRef} aria-hidden="true" style={{ display: "none" }} />
+      <audio ref={audioRef} preload="metadata" style={{ display: "none" }} />
     </AudioContext.Provider>
   );
 }
