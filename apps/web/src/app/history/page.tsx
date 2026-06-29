@@ -22,41 +22,126 @@ type TimeBlock =
   | "Today Morning"
   | "Today Afternoon"
   | "Today Evening"
-  | "Yesterday"
   | "Earlier This Week"
-  | "Older";
+  | "Earlier This Month";
 
 type HistoryEntryWithTrack = HistoryEntry & {
   track: Track;
+};
+
+type HistoryDisplayEntry = HistoryEntryWithTrack & {
+  isAggregate?: boolean;
 };
 
 const timeBlocks: TimeBlock[] = [
   "Today Morning",
   "Today Afternoon",
   "Today Evening",
-  "Yesterday",
   "Earlier This Week",
-  "Older",
+  "Earlier This Month",
 ];
 
-function getTimeBlock(isoDate: string): TimeBlock {
+function getHistoryTrackKey(track: Track) {
+  return [track.title, track.type, track.mood]
+    .map((value) => value.trim().toLowerCase())
+    .join("|");
+}
+
+function getSessionLabel(date: Date) {
+  const hour = date.getHours();
+
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  return "Evening";
+}
+
+function getHistoryBucketKey(isoDate: string) {
+  const played = new Date(isoDate);
+  const year = played.getFullYear();
+  const month = String(played.getMonth() + 1).padStart(2, "0");
+  const date = String(played.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}|${getSessionLabel(played)}`;
+}
+
+function getStartOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getDaysFromToday(isoDate: string) {
   const played = new Date(isoDate);
   const now = new Date();
-  const diffDays = Math.floor(
-    (now.getTime() - played.getTime()) / 86_400_000,
+  const playedDay = getStartOfDay(played);
+  const today = getStartOfDay(now);
+
+  return Math.floor(
+    (today.getTime() - playedDay.getTime()) / 86_400_000,
   );
+}
 
-  if (diffDays === 0) {
-    const hour = played.getHours();
+function getTodayTimeBlock(isoDate: string): TimeBlock | null {
+  if (getDaysFromToday(isoDate) !== 0) return null;
 
-    if (hour < 12) return "Today Morning";
-    if (hour < 17) return "Today Afternoon";
-    return "Today Evening";
-  }
+  const session = getSessionLabel(new Date(isoDate));
 
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays <= 6) return "Earlier This Week";
-  return "Older";
+  if (session === "Morning") return "Today Morning";
+  if (session === "Afternoon") return "Today Afternoon";
+  return "Today Evening";
+}
+
+function isWithinCurrentWeek(isoDate: string) {
+  const diffDays = getDaysFromToday(isoDate);
+
+  return diffDays >= 1 && diffDays <= 6;
+}
+
+function isEarlierThisMonth(isoDate: string) {
+  const played = new Date(isoDate);
+  const now = new Date();
+  const diffDays = getDaysFromToday(isoDate);
+
+  return (
+    diffDays > 6 &&
+    played.getFullYear() === now.getFullYear() &&
+    played.getMonth() === now.getMonth()
+  );
+}
+
+function aggregateEntriesByTrack(
+  entries: HistoryEntryWithTrack[],
+  idPrefix: string,
+): HistoryDisplayEntry[] {
+  const aggregatedEntries = new Map<string, HistoryDisplayEntry>();
+
+  entries.forEach((entry) => {
+    const existingEntry = aggregatedEntries.get(entry.track.id);
+    if (!existingEntry) {
+      aggregatedEntries.set(entry.track.id, {
+        ...entry,
+        id: `aggregate-${idPrefix}-${entry.track.id}`,
+        isAggregate: true,
+      });
+      return;
+    }
+
+    const isEntryNewer =
+      new Date(entry.playedAt).getTime() >
+      new Date(existingEntry.playedAt).getTime();
+    const latestEntry = isEntryNewer ? entry : existingEntry;
+
+    aggregatedEntries.set(entry.track.id, {
+      ...latestEntry,
+      id: existingEntry.id,
+      playCount: existingEntry.playCount + entry.playCount,
+      isAggregate: true,
+    });
+  });
+
+  return [...aggregatedEntries.values()].sort(
+    (firstEntry, secondEntry) =>
+      new Date(secondEntry.playedAt).getTime() -
+      new Date(firstEntry.playedAt).getTime(),
+  );
 }
 
 export default function HistoryPage() {
@@ -70,31 +155,46 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const historyEntries = useMemo(
-    () =>
-      history
-        .map((entry) => {
-          const track = tracks.find(
-            (currentTrack) => currentTrack.id === entry.trackId,
-          );
+    () => {
+      const dedupedEntries = new Map<string, HistoryEntryWithTrack>();
 
-          return track ? { ...entry, track } : null;
-        })
-        .filter((entry): entry is HistoryEntryWithTrack => Boolean(entry)),
+      history.forEach((entry) => {
+        const track = tracks.find(
+          (currentTrack) => currentTrack.id === entry.trackId,
+        );
+        if (!track) return;
+
+        const trackKey = `${getHistoryTrackKey(track)}|${getHistoryBucketKey(
+          entry.playedAt,
+        )}`;
+        const existingEntry = dedupedEntries.get(trackKey);
+        if (!existingEntry) {
+          dedupedEntries.set(trackKey, { ...entry, track });
+          return;
+        }
+
+        const isEntryNewer =
+          new Date(entry.playedAt).getTime() >
+          new Date(existingEntry.playedAt).getTime();
+
+        dedupedEntries.set(trackKey, {
+          ...(isEntryNewer ? { ...entry, track } : existingEntry),
+          playCount: existingEntry.playCount + entry.playCount,
+        });
+      });
+
+      return [...dedupedEntries.values()];
+    },
     [history, tracks],
   );
 
   const availableTypes = useMemo(
     () => [
       ...new Set(
-        history
-          .map((entry) =>
-            tracks.find((track) => track.id === entry.trackId),
-          )
-          .filter((track): track is Track => Boolean(track))
-          .map((track) => track.type as string),
+        historyEntries.map((entry) => entry.track.type as string),
       ),
     ],
-    [history, tracks],
+    [historyEntries],
   );
   const selectedFilter =
     activeFilter === "All" || availableTypes.includes(activeFilter)
@@ -115,16 +215,52 @@ export default function HistoryPage() {
   }, [selectedFilter, historyEntries]);
 
   const groupedEntries = useMemo(
-    () =>
-      timeBlocks
+    () => {
+      const entriesByBlock = new Map<TimeBlock, HistoryDisplayEntry[]>();
+
+      timeBlocks.forEach((block) => {
+        entriesByBlock.set(block, []);
+      });
+
+      filteredEntries.forEach((entry) => {
+        const todayBlock = getTodayTimeBlock(entry.playedAt);
+        if (!todayBlock) return;
+
+        entriesByBlock.get(todayBlock)?.push(entry);
+      });
+
+      entriesByBlock.set(
+        "Earlier This Week",
+        aggregateEntriesByTrack(
+          filteredEntries.filter((entry) => isWithinCurrentWeek(entry.playedAt)),
+          "week",
+        ),
+      );
+      entriesByBlock.set(
+        "Earlier This Month",
+        aggregateEntriesByTrack(
+          filteredEntries.filter((entry) => isEarlierThisMonth(entry.playedAt)),
+          "month",
+        ),
+      );
+
+      return timeBlocks
         .map((block) => ({
           block,
-          entries: filteredEntries.filter(
-            (entry) => getTimeBlock(entry.playedAt) === block,
-          ),
+          entries: entriesByBlock.get(block) ?? [],
         }))
-        .filter((group) => group.entries.length > 0),
+        .filter((group) => group.entries.length > 0);
+    },
     [filteredEntries],
+  );
+
+  const displayedTrackCount = useMemo(
+    () =>
+      groupedEntries.reduce(
+        (total, group) => total + group.entries.length,
+        0,
+      ),
+    [groupedEntries],
   );
 
   const recentTracks = useMemo(
@@ -167,7 +303,7 @@ export default function HistoryPage() {
           pageHeader={
             <PageHeader
               title="History"
-              trackCount={filteredEntries.length}
+              trackCount={displayedTrackCount}
               actions={
                 <button
                   type="button"
@@ -232,7 +368,9 @@ export default function HistoryPage() {
                         }
                         onPlay={handlePlayTrack}
                         onFavorite={(track) => toggleFavorite(track.id)}
-                        onRemove={removeFromHistory}
+                        onRemove={
+                          entry.isAggregate ? undefined : removeFromHistory
+                        }
                       />
                     ))}
                   </div>

@@ -2,10 +2,9 @@ package history
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,13 +16,34 @@ func NewRepository(dbConn *pgxpool.Pool) *Repository {
 	return &Repository{dbConn: dbConn}
 }
 
+func currentHistoryBucket() (time.Time, string) {
+	location, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		location = time.Local
+	}
+
+	now := time.Now().In(location)
+	session := "Evening"
+	if now.Hour() < 12 {
+		session = "Morning"
+	} else if now.Hour() < 17 {
+		session = "Afternoon"
+	}
+
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location), session
+}
+
 func (r *Repository) List(ctx context.Context, userID string, limit, offset int) ([]HistoryTrack, int, error) {
 	countQuery := `
-		SELECT COUNT(DISTINCT h.track_id)
-		FROM history h
-		JOIN tracks t ON t.id = h.track_id
-		WHERE h.user_id = $1
-			AND t.is_published = true
+		SELECT COUNT(*)
+		FROM (
+			SELECT 1
+			FROM history h
+			JOIN tracks t ON t.id = h.track_id
+			WHERE h.user_id = $1
+				AND t.is_published = true
+			GROUP BY h.track_id, h.played_date, h.session_label
+		) grouped_history
 	`
 
 	var total int
@@ -36,10 +56,14 @@ func (r *Repository) List(ctx context.Context, userID string, limit, offset int)
 			SELECT
 				h.id,
 				h.track_id,
+				h.played_date,
+				h.session_label,
 				h.played_at,
-				SUM(h.play_count) OVER (PARTITION BY h.track_id)::int AS total_play_count,
+				SUM(h.play_count) OVER (
+					PARTITION BY h.track_id, h.played_date, h.session_label
+				)::int AS total_play_count,
 				ROW_NUMBER() OVER (
-					PARTITION BY h.track_id
+					PARTITION BY h.track_id, h.played_date, h.session_label
 					ORDER BY h.played_at DESC, h.id DESC
 				) AS row_number
 			FROM history h
@@ -102,56 +126,102 @@ func (r *Repository) List(ctx context.Context, userID string, limit, offset int)
 }
 
 func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
-	var entryID string
-	var totalPlayCount int
-	err := r.dbConn.QueryRow(
+	playedDate, sessionLabel := currentHistoryBucket()
+
+	tx, err := r.dbConn.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin history record transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	lockKey := fmt.Sprintf(
+		"%s|%s|%s|%s",
+		userID,
+		trackID,
+		playedDate.Format("2006-01-02"),
+		sessionLabel,
+	)
+	if _, err := tx.Exec(
+		ctx,
+		`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+		lockKey,
+	); err != nil {
+		return fmt.Errorf("lock history bucket: %w", err)
+	}
+
+	rows, err := tx.Query(
 		ctx,
 		`
-			SELECT id
+			SELECT id, play_count
 			FROM history
 			WHERE user_id = $1
 				AND track_id = $2
+				AND played_date = $3
+				AND session_label = $4
 			ORDER BY played_at DESC, id DESC
-			LIMIT 1
+			FOR UPDATE
 		`,
 		userID,
 		trackID,
-	).Scan(&entryID)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return fmt.Errorf("find history entry: %w", err)
+		playedDate,
+		sessionLabel,
+	)
+	if err != nil {
+		return fmt.Errorf("find history bucket: %w", err)
+	}
+	defer rows.Close()
+
+	var latestEntryID string
+	totalPlayCount := 0
+	duplicateEntryIDs := []string{}
+	for rows.Next() {
+		var entryID string
+		var playCount int
+		if err := rows.Scan(&entryID, &playCount); err != nil {
+			return fmt.Errorf("scan history bucket: %w", err)
+		}
+
+		if latestEntryID == "" {
+			latestEntryID = entryID
+		} else {
+			duplicateEntryIDs = append(duplicateEntryIDs, entryID)
+		}
+		totalPlayCount += playCount
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate history bucket: %w", err)
 	}
 
-	if errors.Is(err, pgx.ErrNoRows) {
-		if _, err := r.dbConn.Exec(
+	if latestEntryID == "" {
+		if _, err := tx.Exec(
 			ctx,
 			`
-				INSERT INTO history (user_id, track_id)
-				VALUES ($1, $2)
+				INSERT INTO history (
+					user_id,
+					track_id,
+					play_count,
+					played_at,
+					played_date,
+					session_label
+				)
+				VALUES ($1, $2, 1, NOW(), $3, $4)
 			`,
 			userID,
 			trackID,
+			playedDate,
+			sessionLabel,
 		); err != nil {
 			return fmt.Errorf("insert history entry: %w", err)
+		}
+
+		if err := tx.Commit(ctx); err != nil {
+			return fmt.Errorf("commit history record transaction: %w", err)
 		}
 
 		return nil
 	}
 
-	if err := r.dbConn.QueryRow(
-		ctx,
-		`
-			SELECT COALESCE(SUM(play_count), 0)
-			FROM history
-			WHERE user_id = $1
-				AND track_id = $2
-		`,
-		userID,
-		trackID,
-	).Scan(&totalPlayCount); err != nil {
-		return fmt.Errorf("count track plays: %w", err)
-	}
-
-	if _, err := r.dbConn.Exec(
+	if _, err := tx.Exec(
 		ctx,
 		`
 			UPDATE history
@@ -159,25 +229,29 @@ func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
 				played_at = NOW()
 			WHERE id = $1
 		`,
-		entryID,
+		latestEntryID,
 		totalPlayCount+1,
 	); err != nil {
 		return fmt.Errorf("update history entry: %w", err)
 	}
 
-	if _, err := r.dbConn.Exec(
-		ctx,
-		`
-			DELETE FROM history
-			WHERE user_id = $1
-				AND track_id = $2
-				AND id <> $3
-		`,
-		userID,
-		trackID,
-		entryID,
-	); err != nil {
-		return fmt.Errorf("dedupe history entries: %w", err)
+	if len(duplicateEntryIDs) > 0 {
+		for _, duplicateEntryID := range duplicateEntryIDs {
+			if _, err := tx.Exec(
+				ctx,
+				`
+					DELETE FROM history
+					WHERE id = $1
+				`,
+				duplicateEntryID,
+			); err != nil {
+				return fmt.Errorf("dedupe history bucket: %w", err)
+			}
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit history record transaction: %w", err)
 	}
 
 	return nil
@@ -186,12 +260,8 @@ func (r *Repository) Record(ctx context.Context, userID, trackID string) error {
 func (r *Repository) Remove(ctx context.Context, entryID, userID string) error {
 	query := `
 		DELETE FROM history
-		WHERE user_id = $2
-			AND track_id = (
-				SELECT track_id
-				FROM history
-				WHERE id = $1 AND user_id = $2
-			)
+		WHERE id = $1
+			AND user_id = $2
 	`
 
 	if _, err := r.dbConn.Exec(ctx, query, entryID, userID); err != nil {

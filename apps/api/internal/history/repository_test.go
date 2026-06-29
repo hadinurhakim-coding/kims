@@ -3,14 +3,19 @@ package history
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
-	"time"
 
+	"github.com/hadinurhakim-coding/kims/apps/api/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func openTestPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
+
+	if err := config.LoadDotEnv(filepath.Join("..", "..", ".env")); err != nil {
+		t.Fatalf("load test .env: %v", err)
+	}
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
@@ -31,7 +36,7 @@ func openTestPool(t *testing.T) *pgxpool.Pool {
 	return pool
 }
 
-func TestRepositoryDedupesHistoryByTrack(t *testing.T) {
+func TestRepositoryRecordsOneHistoryRowPerTrack(t *testing.T) {
 	ctx := context.Background()
 	pool := openTestPool(t)
 	repo := NewRepository(pool)
@@ -74,37 +79,10 @@ func TestRepositoryDedupesHistoryByTrack(t *testing.T) {
 		t.Fatalf("insert track: %v", err)
 	}
 
-	olderPlayedAt := time.Now().Add(-2 * time.Hour)
-	newerPlayedAt := time.Now().Add(-1 * time.Hour)
-
-	var olderEntryID string
-	if err := pool.QueryRow(
-		ctx,
-		`
-			INSERT INTO history (user_id, track_id, play_count, played_at)
-			VALUES ($1, $2, 2, $3)
-			RETURNING id
-		`,
-		userID,
-		trackID,
-		olderPlayedAt,
-	).Scan(&olderEntryID); err != nil {
-		t.Fatalf("insert older history entry: %v", err)
-	}
-
-	var newerEntryID string
-	if err := pool.QueryRow(
-		ctx,
-		`
-			INSERT INTO history (user_id, track_id, play_count, played_at)
-			VALUES ($1, $2, 3, $3)
-			RETURNING id
-		`,
-		userID,
-		trackID,
-		newerPlayedAt,
-	).Scan(&newerEntryID); err != nil {
-		t.Fatalf("insert newer history entry: %v", err)
+	for i := 0; i < 3; i++ {
+		if err := repo.Record(ctx, userID, trackID); err != nil {
+			t.Fatalf("record history attempt %d: %v", i+1, err)
+		}
 	}
 
 	items, total, err := repo.List(ctx, userID, 10, 0)
@@ -117,16 +95,11 @@ func TestRepositoryDedupesHistoryByTrack(t *testing.T) {
 	if len(items) != 1 {
 		t.Fatalf("expected 1 history item, got %d", len(items))
 	}
-	if items[0].EntryID != newerEntryID {
-		t.Fatalf("expected newest entry id %s, got %s", newerEntryID, items[0].EntryID)
-	}
-	if items[0].PlayCount != 5 {
-		t.Fatalf("expected aggregated play count 5, got %d", items[0].PlayCount)
+	if items[0].PlayCount != 3 {
+		t.Fatalf("expected play count 3, got %d", items[0].PlayCount)
 	}
 
-	if err := repo.Record(ctx, userID, trackID); err != nil {
-		t.Fatalf("record history: %v", err)
-	}
+	entryID := items[0].EntryID
 
 	var rowCount int
 	var playCount int
@@ -143,14 +116,14 @@ func TestRepositoryDedupesHistoryByTrack(t *testing.T) {
 		t.Fatalf("count deduped history rows: %v", err)
 	}
 	if rowCount != 1 {
-		t.Fatalf("expected duplicate rows to be removed, got %d rows", rowCount)
+		t.Fatalf("expected one row, got %d rows", rowCount)
 	}
-	if playCount != 6 {
-		t.Fatalf("expected play count 6 after record, got %d", playCount)
+	if playCount != 3 {
+		t.Fatalf("expected play count 3, got %d", playCount)
 	}
 
-	if err := repo.Remove(ctx, newerEntryID, userID); err != nil {
-		t.Fatalf("remove history by duplicate entry id: %v", err)
+	if err := repo.Remove(ctx, entryID, userID); err != nil {
+		t.Fatalf("remove history entry: %v", err)
 	}
 	if err := pool.QueryRow(
 		ctx,

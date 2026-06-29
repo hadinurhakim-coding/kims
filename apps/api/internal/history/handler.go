@@ -3,6 +3,7 @@ package history
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -114,6 +115,7 @@ func writeServiceError(w http.ResponseWriter, err error, fallback string) {
 	case errors.Is(err, ErrNotFound):
 		writeError(w, http.StatusNotFound, "history entry not found")
 	default:
+		log.Printf("%s: %v", fallback, err)
 		writeError(w, http.StatusInternalServerError, fallback)
 	}
 }

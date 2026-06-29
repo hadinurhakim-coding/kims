@@ -109,14 +109,16 @@ export function HistoryItem({
           />
         </button>
 
-        <button
-          type="button"
-          aria-label={`Remove ${track.title} from history`}
-          onClick={() => onRemove?.(entry.id)}
-          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface))] hover:text-[var(--color-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {onRemove ? (
+          <button
+            type="button"
+            aria-label={`Remove ${track.title} from history`}
+            onClick={() => onRemove(entry.id)}
+            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-danger)_10%,var(--color-surface))] hover:text-[var(--color-danger)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
     </div>
   );
