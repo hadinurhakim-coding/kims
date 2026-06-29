@@ -54,8 +54,23 @@ kims/
 - Vercel Hobby/Go Runtime, Supabase Free, Sentry Developer, Umami, and GitHub Actions must be rechecked before launch because limits can change.
 - Store compressed delivery audio only.
 - Keep MVP storage under about 900 MB.
-- Use signed URLs for Supabase Storage assets.
+- Store cover images in a public Supabase Storage bucket and audio files in a private bucket.
+- The Go API resolves public cover object paths and returns signed URLs for private audio object paths.
 - Vercel Go Runtime does not need a cron-job.org keep-alive ping.
+
+## Supabase Storage
+
+Track records should store object paths, not service-role signed URLs.
+
+- `cover_url`: path inside the public covers bucket, for example `music/hadi.png`.
+- `audio_url`: path inside the private audio bucket, for example `music/Doa_Tanpa_Nama_Hadi.mp3`.
+- Backend env vars required for signed audio:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `SUPABASE_AUDIO_BUCKET=audio`
+  - `SUPABASE_COVERS_BUCKET=covers`
+
+The frontend receives resolved `cover_url` and `audio_url` from `/api/v1/tracks`.
 
 ## Development Quality Bar
 

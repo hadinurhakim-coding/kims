@@ -18,6 +18,8 @@
 html {
   color-scheme: light;
   overscroll-behavior: none;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -28,7 +30,101 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   overscroll-behavior: none;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
   touch-action: pan-y;
+}
+
+@layer base {
+  html {
+    overscroll-behavior: none;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
+    touch-action: pan-y;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 760px) {
+  .explore-compact-stack {
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .explore-compact-hero {
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+
+  .explore-compact-hero-cover {
+    height: 8rem;
+    width: 8rem;
+  }
+
+  .explore-compact-hero-title {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  .explore-compact-hero-meta {
+    margin-top: 0.375rem;
+  }
+
+  .explore-compact-hero-support {
+    margin-top: 0.125rem;
+  }
+
+  .explore-compact-hero-badge {
+    margin-top: 0.5rem;
+  }
+
+  .explore-compact-hero-actions {
+    margin-top: 0.75rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .explore-compact-stack {
+    gap: 1rem;
+    padding-top: 0.75rem;
+  }
+
+  .explore-compact-hero {
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+
+  .explore-compact-hero-cover {
+    height: 8rem;
+    width: 8rem;
+  }
+
+  .explore-compact-hero-title {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  .explore-compact-hero-meta {
+    margin-top: 0.375rem;
+  }
+
+  .explore-compact-hero-support {
+    margin-top: 0.125rem;
+  }
+
+  .explore-compact-hero-badge {
+    margin-top: 0.5rem;
+  }
+
+  .explore-compact-hero-actions {
+    margin-top: 0.75rem;
+  }
 }
 
 a {

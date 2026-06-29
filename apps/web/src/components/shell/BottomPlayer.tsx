@@ -49,7 +49,7 @@ export function BottomPlayer({ onFavorite }: BottomPlayerProps) {
 
   return (
     <div
-      className="fixed bottom-3 left-3 right-3 z-50 grid min-h-[88px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.65)] px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_minmax(280px,480px)_minmax(0,1fr)] md:px-4 lg:left-[268px] lg:right-[304px]"
+      className="fixed bottom-1 left-3 right-3 z-50 grid min-h-[68px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[14px] border border-[rgba(255,255,255,0.3)] bg-[rgba(255,255,255,0.65)] px-3 py-0.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] md:left-6 md:right-6 md:grid-cols-[minmax(0,1fr)_minmax(280px,480px)_minmax(0,1fr)] md:px-4 lg:left-[268px] lg:right-[304px]"
       style={{
         backdropFilter: "blur(20px) saturate(180%)",
         WebkitBackdropFilter: "blur(20px) saturate(180%)",

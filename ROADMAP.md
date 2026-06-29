@@ -2,7 +2,7 @@
 
 KIMS (Kim's Music Station) is a free music and sound library for creators. This roadmap reflects the current repository state after the frontend, backend API, database migrations, and production integration work.
 
-Last updated: 2026-06-25
+Last updated: 2026-06-29
 
 ## Status Legend
 
@@ -20,7 +20,12 @@ Last updated: 2026-06-25
 - [x] API routes are proxied from the Next.js app through `/api/v1`.
 - [x] Seed migration exists for 40 initial tracks.
 - [x] Forgot-password uses Brevo REST API OTP flow with 3-step frontend reset.
-- [~] Seeded tracks still use local placeholder cover/audio assets, not real Supabase Storage files.
+- [x] Explore uses a dynamic "Recommended For You" hero with a hybrid score from listening history, favorites, track metadata, recency, and current playback context.
+- [x] Recommended hero explains why a track is suggested and falls back gracefully when there are no personal signals.
+- [x] History now exposes one entry per track, accumulates its play count, and removes existing duplicate history records when a track is played again.
+- [x] Bottom player is compact and Explore content is visually verified so catalog items are not hidden behind it on desktop or mobile.
+- [x] App scrolling disables elastic overscroll at page and panel boundaries.
+- [~] Seeded catalog is partially connected to Supabase Storage; active tracks can use public cover paths and private signed audio paths, but full catalog migration is not complete.
 - [~] CI exists for frontend lint/typecheck/build and backend tests.
 - [ ] Admin upload/content management is not implemented.
 - [ ] Real production launch hardening is not complete.
@@ -30,6 +35,14 @@ Last updated: 2026-06-25
 - [x] Step 1 - UI/UX foundation
   - [x] Next.js app shell, layout, responsive pages, shared UI patterns, and core styling.
   - [x] Sidebar, bottom player, right panel, auth layout, and catalog components.
+  - [x] Bottom player was compacted and repositioned; content views include a bottom safe area for it.
+  - [x] Explore hero and track rows have compact responsive states for short desktop and mobile viewports.
+  - [x] Root and scrollable panels disable elastic overscroll.
+- [x] Explore recommendation iteration
+  - [x] "Featured Track" is replaced by "Recommended For You".
+  - [x] Hybrid ranking considers track type, mood, license, SFX category, favorites, listening frequency, recency, repeated-play penalty, and current track avoidance.
+  - [x] The hero shows a short recommendation reason to make the suggestion easier to understand.
+  - [x] Falls back to the visible catalog when the user has no personalized signals.
 - [x] Step 2 - Music page
   - [x] Music catalog page and filters are implemented.
 - [x] Step 3 - SFX page
@@ -44,12 +57,14 @@ Last updated: 2026-06-25
   - [x] Playlist list/detail UI is implemented and backed by API context.
 - [x] Step 8 - History page
   - [x] History UI is implemented and backed by API context.
+  - [x] Repeated plays of the same track are consolidated into a single visible history entry with an aggregated play count.
 - [x] Step 9 - Auth UI
   - [x] Login and register pages are implemented.
   - [x] Forgot password uses a 3-step flow: email -> OTP -> new password.
 - [x] Step 10 - Wavesurfer.js audio integration
   - [x] AudioContext initializes Wavesurfer and loads the active track audio source.
-  - [~] It currently streams whatever `audio_url` is returned by the API; Supabase signed URL streaming is still Step 12.
+  - [x] Browser media autoplay restrictions are handled so `NotAllowedError` and expected playback interruptions do not crash the UI.
+  - [x] It can stream signed private Supabase audio URLs returned by the API.
 
 ## Backend
 
@@ -64,6 +79,7 @@ Last updated: 2026-06-25
   - [x] 11.8 Favorites domain exists.
   - [x] 11.9 Playlists domain exists.
   - [x] 11.10 History domain exists.
+  - [x] History repository deduplicates repeated track records per user, preserving the newest playback time and total play count.
   - [x] 11.11 Routes are wired under `/api/v1`.
   - [x] 11.12 Frontend mock auth has been replaced with real API auth.
   - [~] Auth is MVP-level: email verification, current-user endpoint, admin roles, and HttpOnly refresh cookies are still pending.
@@ -87,18 +103,18 @@ Last updated: 2026-06-25
 - [x] Tables covered by migrations include users, tracks, favorites, playlists, playlist_tracks, history, refresh_tokens, and schema_migrations.
 - [x] Seed migration 007 inserts 40 catalog tracks.
 - [x] Migration 008 creates `password_resets` for OTP-based forgot password.
-- [~] Seed data uses local `/placeholder-cover.png` and `/Mimpi_Dua_Seal.mp3`.
+- [~] Seed data is mixed: older seed rows use local placeholder paths, while current active tracks can use Supabase Storage object paths.
 - [!] Supabase production migration state must be checked externally with `go run ./cmd/migrate -direction=up` and the Supabase table editor.
 
 ## Storage
 
-- [ ] Step 12 - Supabase Storage
-  - [ ] 12.1 Configure Supabase Storage buckets for audio and covers.
-  - [ ] 12.2 Upload real audio files.
-  - [ ] 12.3 Upload real cover images.
-  - [ ] 12.4 Update the tracks table with real Supabase Storage URLs or paths.
-  - [~] 12.5 Frontend can consume `cover_url` and `audio_url` from the API, but the actual seeded values are still local placeholder/sample files.
-  - [~] 12.6 AudioContext can play remote URLs, but signed Supabase Storage URL generation/refresh is not implemented.
+- [~] Step 12 - Supabase Storage
+  - [x] 12.1 Configure public cover bucket and private audio bucket support through env vars.
+  - [x] 12.2 Backend resolves public cover object paths to Supabase public URLs.
+  - [x] 12.3 Backend resolves private audio object paths to signed Supabase URLs.
+  - [x] 12.4 Frontend consumes resolved `cover_url` and `audio_url` from the API.
+  - [~] 12.5 Real cover/audio assets exist in Supabase buckets, but full catalog path migration still needs verification.
+  - [~] 12.6 Signed URL generation is covered by backend tests; refresh-on-expiry during a long listening session is still a follow-up.
 
 ## Admin And Content
 
@@ -202,7 +218,9 @@ Last updated: 2026-06-25
 
 - [x] Backend JWT middleware tests exist.
 - [x] Backend router tests exist.
-- [ ] Backend domain tests for auth, tracks, favorites, playlists, and history are not complete.
+- [x] Backend history repository integration test covers duplicate consolidation, aggregate play counts, and remove-by-track behavior.
+- [x] Backend storage unit tests cover public cover URL resolution and private audio signed URL generation.
+- [~] Backend domain tests for auth, tracks, favorites, playlists, and broader history flows are not complete.
 - [x] GitHub Actions runs `go test ./...` for the API.
 - [x] GitHub Actions runs web lint, typecheck, and build.
 - [~] Frontend has no real unit/component test suite yet.

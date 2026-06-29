@@ -141,22 +141,22 @@ export function TrackItem({
         }
       }}
       className={[
-        "group grid min-h-16 cursor-pointer grid-cols-[32px_48px_minmax(0,1fr)] items-center gap-3 rounded-[var(--radius-md)] border-l-2 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] md:grid-cols-[32px_48px_minmax(0,1fr)_auto_64px_auto] md:gap-4",
+        "group grid min-h-16 cursor-pointer grid-cols-[28px_44px_minmax(0,1fr)_auto] items-center gap-2 rounded-[var(--radius-md)] border-l-2 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] md:grid-cols-[32px_48px_minmax(0,1fr)_auto_64px_auto] md:gap-4",
         isSelected
           ? "border-[var(--color-accent-primary)] bg-[color-mix(in_srgb,var(--color-accent-primary)_8%,var(--color-surface))]"
           : "border-transparent bg-[var(--color-surface)] hover:bg-[var(--color-background)]",
       ].join(" ")}
     >
-      <span className="w-8 text-sm font-medium text-[var(--color-text-muted)]">
+      <span className="row-span-2 w-7 text-sm font-medium text-[var(--color-text-muted)] md:row-span-1 md:w-8">
         #{rank}
       </span>
 
       <Image
         src={track.cover}
         alt={track.title}
-        width={48}
-        height={48}
-        className="h-12 w-12 rounded-[var(--radius-md)] object-cover"
+        width={44}
+        height={44}
+        className="row-span-2 h-11 w-11 rounded-[var(--radius-md)] object-cover md:row-span-1 md:h-12 md:w-12"
       />
 
       <div className="min-w-0">
@@ -168,7 +168,7 @@ export function TrackItem({
         </div>
       </div>
 
-      <div className="col-start-3 flex flex-wrap items-center gap-2 md:col-start-auto">
+      <div className="col-start-3 row-start-2 hidden flex-wrap items-center gap-2 md:col-start-auto md:row-start-auto md:flex">
         <span
           className={[
             "w-fit rounded-[var(--radius-full)] px-3 py-1 text-xs font-medium text-[var(--color-surface)]",
@@ -189,16 +189,16 @@ export function TrackItem({
         ) : null}
       </div>
 
-      <span className="col-start-3 w-16 text-left text-sm text-[var(--color-text-muted)] md:col-start-auto md:text-right">
+      <span className="hidden w-16 text-left text-sm text-[var(--color-text-muted)] md:col-start-auto md:block md:text-right">
         {track.duration}
       </span>
 
-      <div className="col-start-3 flex items-center gap-1 md:col-start-auto">
+      <div className="col-start-4 row-span-2 row-start-1 flex items-center gap-1 md:col-start-auto md:row-span-1 md:row-start-auto">
         <button
           type="button"
           aria-label={`Favorite ${track.title}`}
           onClick={(event) => handleAction(event, onFavorite)}
-          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+          className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9"
         >
           <Heart
             className={[
@@ -214,7 +214,7 @@ export function TrackItem({
           aria-label={`${isPlaying ? "Pause" : "Play"} ${track.title}`}
           onClick={(event) => handleAction(event, onPreview)}
           className={[
-            "flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] transition-all duration-150 hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]",
+            "flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] transition-all duration-150 hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9",
             isPlaying
               ? "animate-pulse text-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)] ring-offset-1 ring-offset-[var(--color-surface)]"
               : "text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-primary)]",
@@ -230,7 +230,7 @@ export function TrackItem({
           type="button"
           aria-label={`Download ${track.title}`}
           onClick={(event) => handleAction(event, onDownload)}
-          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+          className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:flex"
         >
           <Download className="h-4 w-4" />
         </button>
@@ -243,7 +243,7 @@ export function TrackItem({
               event.stopPropagation();
               setIsDropdownOpen((isOpen) => !isOpen);
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] hover:text-[var(--color-accent-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+            className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] hover:text-[var(--color-accent-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:flex"
           >
             <ListPlus className="h-4 w-4" />
           </button>

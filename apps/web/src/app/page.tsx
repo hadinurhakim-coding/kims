@@ -18,6 +18,19 @@ import { usePlaylists } from "@/context/PlaylistContext";
 import { useTracks } from "@/context/TracksContext";
 import type { Track } from "@/data/tracks";
 
+type RecommendationResult = {
+  track: Track;
+  reason: string;
+};
+
+function incrementScore<TKey>(
+  scores: Map<TKey, number>,
+  key: TKey,
+  amount: number,
+) {
+  scores.set(key, (scores.get(key) ?? 0) + amount);
+}
+
 export default function HomePage() {
   const { favoritedIds, isFavorite, toggleFavorite } = useFavorites();
   const { history } = useHistory();
@@ -47,7 +60,7 @@ export default function HomePage() {
     });
   }, [activeFilter, searchQuery, tracks]);
 
-  const recommendedTrack = useMemo(() => {
+  const recommendation = useMemo<RecommendationResult | null>(() => {
     if (visibleTracks.length === 0) return null;
 
     const trackById = new Map(tracks.map((track) => [track.id, track]));
@@ -57,23 +70,24 @@ export default function HomePage() {
     const licenseScores = new Map<Track["licenseLabel"], number>();
     const sfxCategoryScores = new Map<NonNullable<Track["sfxCategory"]>, number>();
 
-    history.forEach((entry) => {
+    history.forEach((entry, index) => {
       const track = trackById.get(entry.trackId);
       if (!track) return;
 
       const weight = Math.max(1, entry.playCount);
+      const recencyBoost = Math.max(0, 3 - index);
+      const historyWeight = weight + recencyBoost;
+
       playCountByTrack.set(
         track.id,
         (playCountByTrack.get(track.id) ?? 0) + weight,
       );
-      typeScores.set(track.type, (typeScores.get(track.type) ?? 0) + weight);
-      moodScores.set(track.mood, (moodScores.get(track.mood) ?? 0) + weight);
+      incrementScore(typeScores, track.type, historyWeight);
+      incrementScore(moodScores, track.mood, historyWeight);
+      incrementScore(licenseScores, track.licenseLabel, Math.max(1, weight));
 
       if (track.sfxCategory) {
-        sfxCategoryScores.set(
-          track.sfxCategory,
-          (sfxCategoryScores.get(track.sfxCategory) ?? 0) + weight,
-        );
+        incrementScore(sfxCategoryScores, track.sfxCategory, historyWeight);
       }
     });
 
@@ -81,58 +95,108 @@ export default function HomePage() {
       const track = trackById.get(trackId);
       if (!track) return;
 
-      typeScores.set(track.type, (typeScores.get(track.type) ?? 0) + 3);
-      moodScores.set(track.mood, (moodScores.get(track.mood) ?? 0) + 3);
-      licenseScores.set(
-        track.licenseLabel,
-        (licenseScores.get(track.licenseLabel) ?? 0) + 2,
-      );
+      incrementScore(typeScores, track.type, 4);
+      incrementScore(moodScores, track.mood, 4);
+      incrementScore(licenseScores, track.licenseLabel, 3);
 
       if (track.sfxCategory) {
-        sfxCategoryScores.set(
-          track.sfxCategory,
-          (sfxCategoryScores.get(track.sfxCategory) ?? 0) + 2,
-        );
+        incrementScore(sfxCategoryScores, track.sfxCategory, 3);
       }
     });
 
     const hasPersonalSignal = history.length > 0 || favoritedIds.size > 0;
-    if (!hasPersonalSignal) return visibleTracks[0];
-
-    return visibleTracks.reduce((bestTrack, track) => {
-      const scoreTrack = (candidate: Track) => {
-        const playCount = playCountByTrack.get(candidate.id) ?? 0;
-        let score = 0;
-
-        score += typeScores.get(candidate.type) ?? 0;
-        score += moodScores.get(candidate.mood) ?? 0;
-        score += licenseScores.get(candidate.licenseLabel) ?? 0;
-
-        if (candidate.sfxCategory) {
-          score += sfxCategoryScores.get(candidate.sfxCategory) ?? 0;
-        }
-
-        if (favoritedIds.has(candidate.id)) {
-          score += 2;
-        }
-
-        score -= Math.min(playCount * 4, 12);
-
-        if (currentTrack?.id === candidate.id) {
-          score -= 10;
-        }
-
-        return score;
+    if (!hasPersonalSignal) {
+      return {
+        track: visibleTracks[0],
+        reason:
+          activeFilter === "All"
+            ? "Fresh pick from the catalog."
+            : `Fresh pick from ${activeFilter}.`,
       };
+    }
 
-      return scoreTrack(track) > scoreTrack(bestTrack) ? track : bestTrack;
-    }, visibleTracks[0]);
-  }, [currentTrack?.id, favoritedIds, history, tracks, visibleTracks]);
+    const scoreTrack = (candidate: Track) => {
+      const playCount = playCountByTrack.get(candidate.id) ?? 0;
+      let score = 0;
 
-  const featuredTrack = recommendedTrack
+      score += (typeScores.get(candidate.type) ?? 0) * 3;
+      score += (moodScores.get(candidate.mood) ?? 0) * 2;
+      score += licenseScores.get(candidate.licenseLabel) ?? 0;
+
+      if (candidate.sfxCategory) {
+        score += (sfxCategoryScores.get(candidate.sfxCategory) ?? 0) * 2;
+      }
+
+      if (favoritedIds.has(candidate.id)) {
+        score += 5;
+      }
+
+      score -= Math.min(playCount * 4, 16);
+
+      if (currentTrack?.id === candidate.id && visibleTracks.length > 1) {
+        score -= 20;
+      }
+
+      return score;
+    };
+
+    const [recommendedTrack] = [...visibleTracks].sort((left, right) => {
+      const scoreDifference = scoreTrack(right) - scoreTrack(left);
+      if (scoreDifference !== 0) return scoreDifference;
+
+      const leftPlays = playCountByTrack.get(left.id) ?? 0;
+      const rightPlays = playCountByTrack.get(right.id) ?? 0;
+
+      return leftPlays - rightPlays;
+    });
+
+    const reasons = [
+      {
+        text: `Because you often play ${recommendedTrack.type}.`,
+        score: typeScores.get(recommendedTrack.type) ?? 0,
+      },
+      {
+        text: `Because ${recommendedTrack.mood} tracks match your listening.`,
+        score: moodScores.get(recommendedTrack.mood) ?? 0,
+      },
+      {
+        text: `Based on your ${recommendedTrack.licenseLabel} favorites.`,
+        score: licenseScores.get(recommendedTrack.licenseLabel) ?? 0,
+      },
+    ];
+
+    if (recommendedTrack.sfxCategory) {
+      reasons.push({
+        text: `Because you use ${recommendedTrack.sfxCategory} sound effects.`,
+        score: sfxCategoryScores.get(recommendedTrack.sfxCategory) ?? 0,
+      });
+    }
+
+    if (favoritedIds.has(recommendedTrack.id)) {
+      reasons.push({
+        text: "One of your saved tracks, ready to revisit.",
+        score: 4,
+      });
+    }
+
+    const reason =
+      reasons.sort((left, right) => right.score - left.score)[0]?.text ??
+      "Picked from your listening and favorites.";
+
+    return { track: recommendedTrack, reason };
+  }, [
+    activeFilter,
+    currentTrack?.id,
+    favoritedIds,
+    history,
+    tracks,
+    visibleTracks,
+  ]);
+
+  const featuredTrack = recommendation
     ? {
-        ...recommendedTrack,
-        isFavorite: isFavorite(recommendedTrack.id),
+        ...recommendation.track,
+        isFavorite: isFavorite(recommendation.track.id),
       }
     : null;
 
@@ -191,7 +255,7 @@ export default function HomePage() {
     >
       <div
         className={[
-          "mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pt-6 md:px-6 lg:px-8",
+          "explore-compact-stack mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pt-6 md:px-6 lg:px-8",
           currentTrack ? "pb-40" : "pb-6",
         ].join(" ")}
       >
@@ -201,6 +265,7 @@ export default function HomePage() {
           <HeroSection
             track={featuredTrack}
             eyebrow="Recommended For You"
+            supportingText={recommendation?.reason}
             onPlay={handlePlayTrack}
             onFavorite={(track) => toggleFavorite(track.id)}
           />

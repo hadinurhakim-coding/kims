@@ -37,6 +37,13 @@ function isPlayableAudioSource(source: string) {
   );
 }
 
+function isExpectedPlaybackInterruption(error: unknown) {
+  return (
+    error instanceof DOMException &&
+    (error.name === "NotAllowedError" || error.name === "AbortError")
+  );
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const { recordPlay } = useHistory();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -71,8 +78,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     waveSurfer.on("ready", () => {
       setDuration(waveSurfer.getDuration());
       setIsReady(true);
-      void waveSurfer.play();
-      setIsPlaying(true);
     });
 
     waveSurfer.on("audioprocess", () => {
@@ -86,7 +91,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
     waveSurfer.on("error", (error) => {
       setIsReady(false);
-      console.error("WaveSurfer error", error);
+
+      if (!isExpectedPlaybackInterruption(error)) {
+        console.warn("WaveSurfer error", error);
+      }
     });
 
     return () => {
@@ -95,37 +103,54 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const playTrack = useCallback((track: Track) => {
-    const waveSurfer = waveSurferRef.current;
-
-    if (!waveSurfer) return;
-
-    if (currentTrackRef.current?.id === track.id) {
-      void waveSurfer.play();
+  const playWaveSurfer = useCallback(async (waveSurfer: WaveSurfer) => {
+    try {
+      await waveSurfer.play();
       setIsPlaying(true);
-      return;
-    }
+    } catch (error) {
+      setIsPlaying(false);
 
-    setCurrentTrack(track);
-    setIsReady(false);
-    setIsPlaying(false);
-    setDuration(0);
-    setCurrentTime(0);
-    if (!isPlayableAudioSource(track.audioSrc)) {
+      if (!isExpectedPlaybackInterruption(error)) {
+        console.warn("WaveSurfer play was interrupted", error);
+      }
+    }
+  }, []);
+
+  const playTrack = useCallback(
+    (track: Track) => {
+      const waveSurfer = waveSurferRef.current;
+
+      if (!waveSurfer) return;
+
+      if (currentTrackRef.current?.id === track.id) {
+        void playWaveSurfer(waveSurfer);
+        return;
+      }
+
+      setCurrentTrack(track);
       setIsReady(false);
-      return;
-    }
-
-    void waveSurfer
-      .load(track.audioSrc)
-      .then(() => {
-        void recordPlay(track.id);
-      })
-      .catch(() => {
+      setIsPlaying(false);
+      setDuration(0);
+      setCurrentTime(0);
+      if (!isPlayableAudioSource(track.audioSrc)) {
         setIsReady(false);
-        setIsPlaying(false);
-      });
-  }, [recordPlay]);
+        return;
+      }
+
+      void waveSurfer
+        .load(track.audioSrc)
+        .then(() => {
+          void recordPlay(track.id);
+        })
+        .catch(() => {
+          setIsReady(false);
+          setIsPlaying(false);
+        });
+
+      void playWaveSurfer(waveSurfer);
+    },
+    [playWaveSurfer, recordPlay],
+  );
 
   const togglePlayPause = useCallback(() => {
     const waveSurfer = waveSurferRef.current;
@@ -138,9 +163,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    void waveSurfer.play();
-    setIsPlaying(true);
-  }, [isReady]);
+    void playWaveSurfer(waveSurfer);
+  }, [isReady, playWaveSurfer]);
 
   const setVolume = useCallback((nextVolume: number) => {
     const normalizedVolume = Math.min(1, Math.max(0, nextVolume));

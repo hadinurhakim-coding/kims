@@ -7,6 +7,7 @@ import Image from "next/image";
 export interface HeroSectionProps {
   track: Track;
   eyebrow?: string;
+  supportingText?: string;
   onPlay?: (track: Track) => void;
   onFavorite?: (track: Track) => void;
 }
@@ -20,32 +21,38 @@ const licenseBadgeClasses: Record<Track["licenseLabel"], string> = {
 export function HeroSection({
   track,
   eyebrow = "Featured Track",
+  supportingText,
   onPlay,
   onFavorite,
 }: HeroSectionProps) {
   return (
-    <section className="flex flex-col items-center gap-6 rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-md)] md:flex-row md:justify-between md:p-8">
+    <section className="explore-compact-hero flex flex-col items-center gap-6 rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-md)] md:flex-row md:justify-between md:p-8">
       <div className="order-2 flex w-full flex-col justify-center md:order-1">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
           {eyebrow}
         </div>
-        <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">
+        <h1 className="explore-compact-hero-title text-3xl font-bold text-[var(--color-text-primary)]">
           {track.title}
         </h1>
-        <div className="mt-2 text-sm text-[var(--color-text-muted)]">
+        <div className="explore-compact-hero-meta mt-2 text-sm text-[var(--color-text-muted)]">
           {track.type} &middot; {track.mood}
         </div>
+        {supportingText ? (
+          <p className="explore-compact-hero-support mt-2 max-w-xl text-sm leading-5 text-[var(--color-text-muted)]">
+            {supportingText}
+          </p>
+        ) : null}
 
         <span
           className={[
-            "mt-4 w-fit rounded-[var(--radius-full)] px-3 py-1 text-xs font-medium text-[var(--color-surface)]",
+            "explore-compact-hero-badge mt-4 w-fit rounded-[var(--radius-full)] px-3 py-1 text-xs font-medium text-[var(--color-surface)]",
             licenseBadgeClasses[track.licenseLabel],
           ].join(" ")}
         >
           {track.licenseLabel}
         </span>
 
-        <div className="mt-6 flex items-center gap-3">
+        <div className="explore-compact-hero-actions mt-6 flex items-center gap-3">
           <button
             type="button"
             aria-label={`Play ${track.title}`}
@@ -81,7 +88,7 @@ export function HeroSection({
         height={200}
         loading="eager"
         priority
-        className="order-1 h-[200px] w-[200px] shrink-0 rounded-[var(--radius-lg)] object-cover md:order-2"
+        className="explore-compact-hero-cover order-1 h-[200px] w-[200px] shrink-0 rounded-[var(--radius-lg)] object-cover md:order-2"
       />
     </section>
   );
