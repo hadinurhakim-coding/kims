@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -45,6 +46,13 @@ func NewRouter(dbConn *pgxpool.Pool) http.Handler {
 }
 
 func (rtr *Router) registerAPIRoutes(r chi.Router) {
+	rateLimiter := appmiddleware.NewRateLimiter()
+	apiLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_API", 300, time.Minute, "api")
+	authLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_AUTH", 20, time.Minute, "auth")
+	otpLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_OTP", 5, 10*time.Minute, "otp")
+	historyLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_HISTORY", 120, time.Minute, "history")
+	adminLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_ADMIN", 60, time.Minute, "admin")
+
 	storageService := storage.NewServiceFromEnv()
 	authHandler := auth.NewHandler(auth.NewService(auth.NewRepository(rtr.dbConn)))
 	resetPasswordHandler := resetpassword.NewHandler(
@@ -60,12 +68,14 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn), storageService))
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Post("/auth/register", authHandler.Register)
-		r.Post("/auth/login", authHandler.Login)
-		r.Post("/auth/refresh", authHandler.Refresh)
-		r.Post("/auth/forgot-password", resetPasswordHandler.RequestOTP)
-		r.Post("/auth/verify-otp", resetPasswordHandler.VerifyOTP)
-		r.Post("/auth/reset-password", resetPasswordHandler.ResetPassword)
+		r.Use(rateLimiter.Middleware(apiLimit))
+
+		r.With(rateLimiter.Middleware(authLimit)).Post("/auth/register", authHandler.Register)
+		r.With(rateLimiter.Middleware(authLimit)).Post("/auth/login", authHandler.Login)
+		r.With(rateLimiter.Middleware(authLimit)).Post("/auth/refresh", authHandler.Refresh)
+		r.With(rateLimiter.Middleware(otpLimit)).Post("/auth/forgot-password", resetPasswordHandler.RequestOTP)
+		r.With(rateLimiter.Middleware(otpLimit)).Post("/auth/verify-otp", resetPasswordHandler.VerifyOTP)
+		r.With(rateLimiter.Middleware(otpLimit)).Post("/auth/reset-password", resetPasswordHandler.ResetPassword)
 
 		r.Get("/tracks", tracksHandler.List)
 		r.Get("/tracks/{id}", tracksHandler.GetByID)
@@ -87,12 +97,13 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 			r.Delete("/playlists/{id}/tracks/{trackID}", playlistsHandler.RemoveTrack)
 
 			r.Get("/history", historyHandler.List)
-			r.Post("/history", historyHandler.Record)
+			r.With(rateLimiter.Middleware(historyLimit)).Post("/history", historyHandler.Record)
 			r.Delete("/history", historyHandler.Clear)
 			r.Delete("/history/{entryID}", historyHandler.Remove)
 
 			r.Group(func(r chi.Router) {
 				r.Use(appmiddleware.RequireAdmin)
+				r.Use(rateLimiter.Middleware(adminLimit))
 
 				r.Post("/tracks", tracksHandler.Create)
 				r.Route("/admin", func(r chi.Router) {

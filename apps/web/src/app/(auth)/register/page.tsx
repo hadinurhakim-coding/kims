@@ -350,14 +350,14 @@ export default function RegisterPage() {
           <span>
             I agree to the{" "}
             <Link
-              href="#"
+              href="/terms"
               className="font-semibold text-[var(--color-accent-primary)]"
             >
               Terms of Service
             </Link>{" "}
             and{" "}
             <Link
-              href="#"
+              href="/privacy"
               className="font-semibold text-[var(--color-accent-primary)]"
             >
               Privacy Policy

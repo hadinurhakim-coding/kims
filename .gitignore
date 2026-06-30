@@ -4,6 +4,14 @@
 .env.*
 !.env.example
 
+# Internal docs (not for public repo)
+CODEX.md
+ROADMAP.md
+docs/
+
+# Deployment configs with hardcoded project IDs or URLs
+vercel.json
+
 # Keys and certificates
 *.pem
 *.key

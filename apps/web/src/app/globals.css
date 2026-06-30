@@ -58,18 +58,21 @@ body {
   }
 
   .explore-compact-hero {
+    padding: 1rem;
+  }
+
+  .explore-compact-hero-inner {
     gap: 1rem;
-    padding: 0.75rem;
   }
 
   .explore-compact-hero-cover {
-    height: 8rem;
-    width: 8rem;
+    height: 9.5rem;
+    width: 9.5rem;
   }
 
   .explore-compact-hero-title {
-    font-size: 1.75rem;
-    line-height: 2rem;
+    font-size: 2rem;
+    line-height: 2.25rem;
   }
 
   .explore-compact-hero-meta {
@@ -96,18 +99,21 @@ body {
   }
 
   .explore-compact-hero {
+    padding: 1rem;
+  }
+
+  .explore-compact-hero-inner {
     gap: 1rem;
-    padding: 0.75rem;
   }
 
   .explore-compact-hero-cover {
-    height: 8rem;
-    width: 8rem;
+    height: min(13rem, 64vw);
+    width: min(13rem, 64vw);
   }
 
   .explore-compact-hero-title {
-    font-size: 1.75rem;
-    line-height: 2rem;
+    font-size: 2rem;
+    line-height: 2.25rem;
   }
 
   .explore-compact-hero-meta {

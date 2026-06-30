@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
+import { AnalyticsScripts } from "@/components/privacy/AnalyticsScripts";
+import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
 import { AudioProvider } from "@/context/AudioContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
@@ -14,8 +15,6 @@ export const metadata: Metadata = {
   description: "A free sound library platform for content creators.",
 };
 
-const umamiScriptUrl = process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL;
-const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export default function RootLayout({
@@ -37,13 +36,16 @@ export default function RootLayout({
             </HistoryProvider>
           </TracksProvider>
         </AuthProvider>
-        {umamiScriptUrl && umamiWebsiteId ? (
-          <Script
-            data-website-id={umamiWebsiteId}
-            src={umamiScriptUrl}
-            strategy="afterInteractive"
-          />
-        ) : null}
+        <AnalyticsScripts
+          umamiScriptUrl={process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL}
+          umamiWebsiteId={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+        />
+        <CookieConsentBanner
+          analyticsEnabled={Boolean(
+            process.env.NEXT_PUBLIC_UMAMI_SCRIPT_URL &&
+              process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
+          )}
+        />
       </body>
     </html>
   );

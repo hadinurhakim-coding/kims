@@ -30,7 +30,7 @@ Last updated: 2026-06-29
 - [~] Published catalog media is storage-backed; legacy placeholder seed rows are unpublished, while full bucket inventory verification is still needed.
 - [~] CI exists for frontend lint/typecheck/build and backend tests.
 - [x] Admin/content management has role guards, upload, track mutation APIs, admin UI, publish toggles, and audit logs.
-- [ ] Real production launch hardening is not complete.
+- [~] Real production launch hardening is mostly complete; domain, SSL, SEO files, and monitoring verification remain.
 
 ## Frontend And UI/UX
 
@@ -178,11 +178,13 @@ Last updated: 2026-06-29
   - [ ] 18.1 Custom domain setup.
   - [!] 18.2 SSL certificate verification.
   - [x] 18.3 Backend CORS configuration.
-  - [ ] 18.4 API rate limiting.
-  - [ ] 18.5 Security headers for Next.js.
-  - [ ] 18.6 Privacy policy page.
-  - [ ] 18.7 Terms of service page.
-  - [ ] 18.8 Cookie consent decision and implementation if needed.
+  - [x] 18.4 API rate limiting.
+  - [x] 18.5 Security headers for Next.js.
+  - [x] 18.6 Privacy policy page.
+  - [x] 18.7 Terms of service page.
+  - [x] 18.8 Cookie consent decision and implementation if needed.
+    - [x] Optional Umami analytics now loads only after explicit consent.
+    - [x] Consent choice is stored locally and includes a direct Privacy Policy link.
 
 - [ ] Step 19 - Launch
   - [x] 19.1 Final smoke test passed for the current production app.
@@ -240,7 +242,7 @@ Last updated: 2026-06-29
 
 ## Recommended Next Order
 
-1. Continue launch hardening with rate limiting, security headers, privacy/terms pages, sitemap, and robots.txt.
+1. Continue launch hardening with sitemap and robots.txt.
 2. Verify production Sentry/Umami dashboards and branch protection settings.
 3. Run Lighthouse/Core Web Vitals and accessibility audits before public launch.
 
@@ -251,6 +253,6 @@ Last updated: 2026-06-29
 - Refresh tokens are API-managed but not yet delivered through HttpOnly Secure cookies.
 - Admin audit logs require migration 016 to be applied before admin content changes in production.
 - Production API CORS requires `WEB_ORIGINS` to include the final KIMS frontend domain.
-- No rate limiting exists yet.
-- No privacy policy or terms pages exist yet.
+- API rate limits are in-memory per backend instance; use shared storage such as Redis/Upstash if global multi-instance limits become necessary.
+- Optional analytics depends on local cookie consent, so production event volume may be lower than total traffic.
 - Production analytics and monitoring require external dashboard verification.
