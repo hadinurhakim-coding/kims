@@ -2,13 +2,13 @@
 @import "../styles/tokens.css";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --muted: #475569;
-  --panel: #ffffff;
-  --border: #dbe3ef;
-  --accent: #0f766e;
-  --accent-foreground: #ffffff;
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+  --muted: var(--color-text-muted);
+  --panel: var(--color-surface);
+  --border: var(--color-border);
+  --accent: var(--color-accent-primary);
+  --accent-foreground: var(--color-surface);
 }
 
 * {
@@ -16,7 +16,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: light dark;
   overscroll-behavior: none;
   overscroll-behavior-x: none;
   overscroll-behavior-y: none;
@@ -138,6 +138,11 @@ a {
   text-decoration: none;
 }
 
+::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
@@ -194,18 +199,18 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 35%, transparent);
   border-radius: 9999px;
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: color-mix(in srgb, var(--color-text-muted) 45%, transparent) transparent;
 }

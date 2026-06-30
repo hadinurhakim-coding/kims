@@ -10,12 +10,12 @@ import {
   LogOut,
   MoreHorizontal,
   Music,
-  Music2,
   ShieldCheck,
   Sparkles,
   UserCircle2,
   Waves,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ComponentType } from "react";
@@ -117,13 +117,21 @@ export function Sidebar() {
       className="flex h-full flex-col bg-[var(--color-surface)] px-4 py-5"
     >
       <Link
-        href="#"
-        className="mb-8 flex items-center gap-2 rounded-[var(--radius-md)] text-lg font-bold text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)]"
+        href="/"
+        aria-label="KIMS home"
+        className="mb-8 flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)]"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent-primary)] text-[var(--color-surface)]">
-          <Music2 className="h-4 w-4" />
+        <Image
+          src="/KIMS_logo.svg"
+          alt="KIMS"
+          width={72}
+          height={72}
+          className="h-[72px] w-[72px] shrink-0 object-contain"
+        />
+        <span className="flex flex-col text-left text-xl font-extrabold uppercase leading-none tracking-normal text-[var(--color-text-primary)]">
+          <span>KIMS</span>
+          <span>MUSIC</span>
         </span>
-        <span>KIMS</span>
       </Link>
 
       <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto pr-1 [mask-image:linear-gradient(to_bottom,black_calc(100%_-_24px),transparent_100%)]">

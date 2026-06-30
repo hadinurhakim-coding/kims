@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, Moon, Search, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { usePlaylists } from "@/context/PlaylistContext";
+import { useTheme } from "@/context/ThemeContext";
 
 export interface TopBarProps {
   searchQuery?: string;
@@ -24,6 +25,7 @@ const routeTitles: Record<string, string> = {
 export function TopBar({ searchQuery = "", onSearch }: TopBarProps) {
   const pathname = usePathname();
   const { playlists } = usePlaylists();
+  const { mounted, resolvedTheme, themePreference, toggleTheme } = useTheme();
   const playlistId = pathname.startsWith("/playlists/")
     ? pathname.split("/")[2]
     : null;
@@ -56,6 +58,30 @@ export function TopBar({ searchQuery = "", onSearch }: TopBarProps) {
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-3">
+        <button
+          type="button"
+          aria-label={
+            mounted ? `Theme is ${themePreference}. Switch theme` : "Toggle theme"
+          }
+          onClick={toggleTheme}
+          className="flex h-10 items-center gap-2 rounded-[var(--radius-full)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 text-xs font-semibold text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
+        >
+          {resolvedTheme === "dark" ? (
+            <Moon className="h-4 w-4 text-[var(--color-accent-primary)]" />
+          ) : (
+            <Sun className="h-4 w-4 text-[var(--color-accent-primary)]" />
+          )}
+          <span className="hidden sm:inline">
+            {mounted
+              ? themePreference === "system"
+                ? "System"
+                : themePreference === "dark"
+                  ? "Dark"
+                  : "Light"
+              : null}
+          </span>
+        </button>
+
         <button
           type="button"
           aria-label="Notifications"

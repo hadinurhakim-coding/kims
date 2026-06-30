@@ -1,0 +1,124 @@
+<svg width="540" height="480" viewBox="70 0 540 480" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>KIMS Music Platform - Cassette Tape Logo</title>
+  <desc>Logo KIMS berbentuk kaset tape dengan warna hitam dan oranye khas Claude Code.</desc>
+
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8C42"/>
+      <stop offset="100%" stop-color="#FF4D00"/>
+    </linearGradient>
+    <linearGradient id="cassetteBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#232323"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+    <linearGradient id="labelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A1A"/>
+      <stop offset="100%" stop-color="#0F0F0F"/>
+    </linearGradient>
+    <linearGradient id="reelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2E2E2E"/>
+      <stop offset="100%" stop-color="#111"/>
+    </linearGradient>
+  </defs>
+
+  <!-- CASSETTE TAPE BODY -->
+  <rect x="90" y="60" width="500" height="360" rx="18" fill="url(#cassetteBody)" stroke="#FF6B35" stroke-width="2"/>
+  <rect x="102" y="72" width="476" height="336" rx="12" fill="none" stroke="#2A2A2A" stroke-width="1.5"/>
+
+  <!-- Corner screws -->
+  <circle cx="116" cy="86"  r="8" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="111" y1="86" x2="121" y2="86" stroke="#555" stroke-width="1.2"/>
+  <line x1="116" y1="81" x2="116" y2="91" stroke="#555" stroke-width="1.2"/>
+
+  <circle cx="564" cy="86"  r="8" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="559" y1="86" x2="569" y2="86" stroke="#555" stroke-width="1.2"/>
+  <line x1="564" y1="81" x2="564" y2="91" stroke="#555" stroke-width="1.2"/>
+
+  <circle cx="116" cy="394" r="8" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="111" y1="394" x2="121" y2="394" stroke="#555" stroke-width="1.2"/>
+  <line x1="116" y1="389" x2="116" y2="399" stroke="#555" stroke-width="1.2"/>
+
+  <circle cx="564" cy="394" r="8" fill="#1A1A1A" stroke="#3A3A3A" stroke-width="1"/>
+  <line x1="559" y1="394" x2="569" y2="394" stroke="#555" stroke-width="1.2"/>
+  <line x1="564" y1="389" x2="564" y2="399" stroke="#555" stroke-width="1.2"/>
+
+  <!-- LABEL AREA -->
+  <rect x="120" y="82" width="440" height="170" rx="8" fill="url(#labelGrad)" stroke="#FF5500" stroke-width="1.2"/>
+  <rect x="120" y="82" width="440" height="5" rx="2" fill="url(#orangeGrad)"/>
+
+  <!-- KIMS text -->
+  <text x="340" y="150"
+    font-family="'SF Mono','Fira Code','Courier New',monospace"
+    font-size="64"
+    font-weight="700"
+    fill="white"
+    text-anchor="middle"
+    letter-spacing="10">KIMS</text>
+
+  <rect x="200" y="162" width="280" height="2.5" rx="1" fill="url(#orangeGrad)"/>
+
+  <text x="340" y="188"
+    font-family="'SF Mono','Fira Code','Courier New',monospace"
+    font-size="11"
+    font-weight="400"
+    fill="#FF8C42"
+    text-anchor="middle"
+    letter-spacing="6">MUSIC PLATFORM</text>
+
+  <rect x="120" y="247" width="440" height="5" rx="2" fill="url(#orangeGrad)"/>
+
+  <!-- TAPE WINDOW AREA -->
+  <rect x="120" y="264" width="440" height="120" rx="8" fill="#0A0A0A" stroke="#2A2A2A" stroke-width="1"/>
+
+  <!-- Left reel -->
+  <circle cx="224" cy="320" r="50" fill="#0D0D0D" stroke="#FF6B35" stroke-width="1.2"/>
+  <circle cx="224" cy="320" r="42" fill="url(#reelGrad)" stroke="#2A2A2A" stroke-width="0.8"/>
+  <line x1="224" y1="282" x2="224" y2="358" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="186" y1="320" x2="262" y2="320" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="197" y1="293" x2="251" y2="347" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="251" y1="293" x2="197" y2="347" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <circle cx="224" cy="320" r="13" fill="#FF6B35"/>
+  <circle cx="224" cy="320" r="6"  fill="#0D0D0D"/>
+
+  <!-- Right reel -->
+  <circle cx="456" cy="320" r="50" fill="#0D0D0D" stroke="#FF6B35" stroke-width="1.2"/>
+  <circle cx="456" cy="320" r="42" fill="url(#reelGrad)" stroke="#2A2A2A" stroke-width="0.8"/>
+  <line x1="456" y1="282" x2="456" y2="358" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="418" y1="320" x2="494" y2="320" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="429" y1="293" x2="483" y2="347" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <line x1="483" y1="293" x2="429" y2="347" stroke="#FF6B35" stroke-width="1.8" opacity="0.65"/>
+  <circle cx="456" cy="320" r="13" fill="#FF6B35"/>
+  <circle cx="456" cy="320" r="6"  fill="#0D0D0D"/>
+
+  <!-- Guide posts -->
+  <circle cx="276" cy="355" r="6" fill="#333" stroke="#FF6B35" stroke-width="1"/>
+  <circle cx="404" cy="355" r="6" fill="#333" stroke="#FF6B35" stroke-width="1"/>
+
+  <!-- Tape window center -->
+  <rect x="288" y="278" width="104" height="50" rx="6" fill="#060606" stroke="#3A3A3A" stroke-width="1"/>
+  <path d="M292 296 C310 288 330 292 340 292 C350 292 370 288 388 296" fill="none" stroke="#FF6B35" stroke-width="2" stroke-linecap="round"/>
+  <path d="M292 308 C310 316 330 312 340 312 C350 312 370 316 388 308" fill="none" stroke="#FF8C42" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Tape path lines -->
+  <line x1="229" y1="363" x2="272" y2="361" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+  <line x1="229" y1="369" x2="272" y2="367" stroke="#FF8C42" stroke-width="1" opacity="0.35"/>
+  <line x1="408" y1="361" x2="451" y2="363" stroke="#FF6B35" stroke-width="1.5" opacity="0.5"/>
+  <line x1="408" y1="367" x2="451" y2="369" stroke="#FF8C42" stroke-width="1" opacity="0.35"/>
+
+  <!-- Bottom slot -->
+  <rect x="210" y="392" width="260" height="14" rx="5" fill="#0A0A0A" stroke="#333" stroke-width="1"/>
+  <rect x="322" y="392" width="36" height="14" rx="3" fill="#151515" stroke="#FF6B35" stroke-width="0.8"/>
+
+  <!-- Side grip ridges left -->
+  <rect x="94"  y="170" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="94"  y="182" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="94"  y="194" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="94"  y="206" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+
+  <!-- Side grip ridges right -->
+  <rect x="574" y="170" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="574" y="182" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="574" y="194" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+  <rect x="574" y="206" width="12" height="6" rx="2" fill="#1E1E1E" stroke="#333" stroke-width="0.5"/>
+
+</svg>

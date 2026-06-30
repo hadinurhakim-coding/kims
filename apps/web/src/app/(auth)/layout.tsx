@@ -1,6 +1,8 @@
-import { Music2 } from "lucide-react";
+"use client";
+
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { useTracks } from "@/context/TracksContext";
 
 const featurePills = [
   "🎵 Free Forever",
@@ -9,37 +11,46 @@ const featurePills = [
 ];
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const { tracks } = useTracks();
+  const coverItems =
+    tracks.length > 0
+      ? Array.from({ length: 12 }, (_, index) => tracks[index % tracks.length])
+      : [];
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--color-background)] text-[var(--color-text-primary)]">
       <aside className="relative hidden w-[45%] overflow-hidden lg:block">
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-4">
-          {Array.from({ length: 12 }, (_, index) => {
-            const seed = index + 1;
-
-            return (
-              <div key={seed} className="relative">
-                <Image
-                  src="/placeholder-cover.png"
-                  alt=""
-                  fill
-                  sizes="15vw"
-                  loading="eager"
-                  priority={index === 0}
-                  className="object-cover"
-                />
-              </div>
-            );
-          })}
+          {coverItems.map((track, index) => (
+            <div key={`${track.id}-${index}`} className="relative">
+              <Image
+                src={track.cover}
+                alt=""
+                fill
+                sizes="15vw"
+                loading="eager"
+                priority={index === 0}
+                className="object-cover"
+              />
+            </div>
+          ))}
         </div>
 
         <div className="absolute inset-0 bg-[rgba(0,0,0,0.55)] backdrop-blur-[8px]" />
 
         <div className="relative z-10 flex h-full flex-col items-center justify-center px-10 text-center">
-          <div className="flex items-center gap-3 text-[var(--color-surface)]">
-            <span className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--color-accent-primary)]">
-              <Music2 className="h-6 w-6" />
+          <div className="flex items-center justify-center gap-2 text-[var(--color-surface)]">
+            <Image
+              src="/KIMS_logo.svg"
+              alt="KIMS"
+              width={72}
+              height={72}
+              className="h-[72px] w-[72px] shrink-0 object-contain"
+            />
+            <span className="flex flex-col text-left text-2xl font-extrabold uppercase leading-none tracking-normal">
+              <span>KIMS</span>
+              <span>MUSIC</span>
             </span>
-            <span className="text-3xl font-bold">KIMS</span>
           </div>
 
           <p className="mt-4 text-sm italic text-[rgba(255,255,255,0.8)]">
@@ -61,12 +72,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <main className="flex h-full w-full flex-col bg-[var(--color-background)] lg:w-[55%]">
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent-primary)] text-[var(--color-surface)]">
-              <Music2 className="h-5 w-5" />
-            </span>
-            <span className="text-xl font-bold text-[var(--color-text-primary)]">
-              KIMS
+          <div className="mb-8 flex items-center justify-center gap-2 lg:hidden">
+            <Image
+              src="/KIMS_logo.svg"
+              alt="KIMS"
+              width={56}
+              height={56}
+              className="h-14 w-14 shrink-0 object-contain"
+            />
+            <span className="flex flex-col text-left text-lg font-extrabold uppercase leading-none tracking-normal text-[var(--color-text-primary)]">
+              <span>KIMS</span>
+              <span>MUSIC</span>
             </span>
           </div>
 
