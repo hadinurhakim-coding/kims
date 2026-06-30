@@ -49,7 +49,7 @@ export function FilterChips({
       <div
         role="group"
         aria-label="Filter tracks by category"
-        className="flex flex-wrap gap-2"
+        className="scrollbar-hide -mx-4 flex flex-nowrap gap-2 overflow-x-auto overflow-y-visible px-4 py-1 overscroll-x-contain md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:py-0"
       >
         {chips.map((chip) => {
           const isActive = chip === selectedChip;
@@ -61,7 +61,7 @@ export function FilterChips({
               aria-pressed={isActive}
               onClick={() => handleSelect(chip)}
               className={[
-                "rounded-[var(--radius-full)] border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)]",
+                "min-h-10 shrink-0 rounded-[var(--radius-full)] border px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] md:px-4 md:py-2",
                 isActive
                   ? "border-[var(--color-accent-primary)] bg-[var(--color-accent-primary)] text-[var(--color-surface)]"
                   : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_8%,var(--color-surface))]",

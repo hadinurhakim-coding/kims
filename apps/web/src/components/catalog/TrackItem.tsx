@@ -188,30 +188,32 @@ export function TrackItem({
         }
       }}
       className={[
-        "group grid min-h-16 cursor-pointer grid-cols-[28px_44px_minmax(0,1fr)_auto] items-center gap-2 rounded-[var(--radius-md)] border-l-2 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] md:grid-cols-[32px_48px_minmax(0,1fr)_auto_64px_auto] md:gap-4",
+        "group grid min-h-[60px] cursor-pointer grid-cols-[24px_48px_minmax(0,1fr)_auto] items-center gap-2 rounded-[var(--radius-md)] border-l-2 px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] md:min-h-16 md:grid-cols-[32px_48px_minmax(0,1fr)_auto_64px_auto] md:gap-4 md:px-3 md:py-2",
         isSelected
           ? "border-[var(--color-accent-primary)] bg-[color-mix(in_srgb,var(--color-accent-primary)_8%,var(--color-surface))]"
           : "border-transparent bg-[var(--color-surface)] hover:bg-[var(--color-background)]",
       ].join(" ")}
     >
-      <span className="row-span-2 w-7 text-sm font-medium text-[var(--color-text-muted)] md:row-span-1 md:w-8">
+      <span className="row-span-2 w-6 text-xs font-medium text-[var(--color-text-muted)] md:row-span-1 md:w-8 md:text-sm">
         #{rank}
       </span>
 
       <Image
         src={track.cover}
         alt={track.title}
-        width={44}
-        height={44}
-        className="row-span-2 h-11 w-11 rounded-[var(--radius-md)] object-cover md:row-span-1 md:h-12 md:w-12"
+        width={48}
+        height={48}
+        sizes="48px"
+        className="row-span-2 h-12 w-12 rounded-[var(--radius-md)] object-cover md:row-span-1"
       />
 
       <div className="min-w-0">
-        <div className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+        <div className="truncate text-sm font-semibold leading-5 text-[var(--color-text-primary)]">
           {track.title}
         </div>
-        <div className="truncate text-xs text-[var(--color-text-muted)]">
+        <div className="truncate text-xs leading-4 text-[var(--color-text-muted)]">
           {track.type} &middot; {track.mood}
+          <span className="md:hidden"> &middot; {track.licenseLabel}</span>
         </div>
       </div>
 
@@ -243,38 +245,38 @@ export function TrackItem({
       <div className="col-start-4 row-span-2 row-start-1 flex items-center gap-1 md:col-start-auto md:row-span-1 md:row-start-auto">
         <button
           type="button"
-          aria-label={`Favorite ${track.title}`}
-          onClick={(event) => handleAction(event, onFavorite)}
-          className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9"
-        >
-          <Heart
-            className={[
-              "h-4 w-4",
-              track.isFavorite
-                ? "fill-[var(--color-danger)] text-[var(--color-danger)]"
-                : "fill-none",
-            ].join(" ")}
-          />
-        </button>
-        <button
-          type="button"
           aria-label={`${isLoadingTrack ? "Loading" : isPlaying ? "Pause" : "Play"} ${track.title}`}
           disabled={isLoadingTrack}
           onClick={(event) => handleAction(event, onPreview)}
           className={[
-            "flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] transition-all duration-150 hover:bg-[var(--color-background)] disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9",
+            "flex h-11 w-11 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-accent-primary)] text-[var(--color-surface)] shadow-[0_8px_18px_color-mix(in_srgb,var(--color-accent-primary)_24%,transparent)] transition-all duration-150 hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_88%,var(--color-text-primary))] disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9 md:bg-transparent md:text-[var(--color-text-muted)] md:shadow-none md:hover:bg-[var(--color-background)]",
             isPlaying || isLoadingTrack
-              ? "animate-pulse text-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)] ring-offset-1 ring-offset-[var(--color-surface)]"
-              : "text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-primary)]",
+              ? "animate-pulse ring-2 ring-[var(--color-accent-primary)] ring-offset-1 ring-offset-[var(--color-surface)] md:text-[var(--color-accent-primary)]"
+              : "md:group-hover:text-[var(--color-accent-primary)]",
           ].join(" ")}
         >
           {isLoadingTrack ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : isPlaying ? (
-            <Pause className="h-5 w-5 fill-[var(--color-accent-primary)] transition-all duration-150" />
+            <Pause className="h-5 w-5 fill-current transition-all duration-150" />
           ) : (
-            <Play className="h-4 w-4 transition-all duration-150 group-hover:h-5 group-hover:w-5" />
+            <Play className="h-5 w-5 fill-current transition-all duration-150 md:h-4 md:w-4 md:fill-none md:group-hover:h-5 md:group-hover:w-5" />
           )}
+        </button>
+        <button
+          type="button"
+          aria-label={`Favorite ${track.title}`}
+          onClick={(event) => handleAction(event, onFavorite)}
+          className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9"
+        >
+          <Heart
+            className={[
+              "h-5 w-5 md:h-4 md:w-4",
+              track.isFavorite
+                ? "fill-[var(--color-danger)] text-[var(--color-danger)]"
+                : "fill-none",
+            ].join(" ")}
+          />
         </button>
         <button
           type="button"

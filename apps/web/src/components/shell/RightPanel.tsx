@@ -49,7 +49,7 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
               src={currentTrack.cover}
               alt={currentTrack.title}
               fill
-              sizes="280px"
+              sizes="(max-width: 1023px) 100vw, 280px"
               className="object-cover"
             />
             <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.58)_0%,transparent_60%)]" />
@@ -201,6 +201,7 @@ export function RightPanel({ recentTracks, onSelect }: RightPanelProps) {
                   alt={track.title}
                   width={48}
                   height={48}
+                  sizes="48px"
                   className="h-12 w-12 shrink-0 rounded-[var(--radius-lg)] object-cover"
                 />
 

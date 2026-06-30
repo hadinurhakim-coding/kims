@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { AnalyticsScripts } from "@/components/privacy/AnalyticsScripts";
 import { CookieConsentBanner } from "@/components/privacy/CookieConsentBanner";
 import { AudioProvider } from "@/context/AudioContext";
@@ -65,8 +66,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
+        <Script
           id="theme-boot"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeBootScript }}
         />
       </head>
