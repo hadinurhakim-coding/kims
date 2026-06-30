@@ -5,6 +5,7 @@
 !.env.example
 
 # Internal docs (not for public repo)
+.codex-tools/
 CODEX.md
 ROADMAP.md
 docs/
