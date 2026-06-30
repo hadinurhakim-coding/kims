@@ -158,10 +158,6 @@ export default function PlaylistDetailPage() {
     await removeTrackFromPlaylist(playlist.id, track.id);
   }
 
-  function handleDownload(track: Track) {
-    console.log("Download track", track);
-  }
-
   async function handleCreatePlaylist(name: string) {
     await createPlaylist(name);
     setIsModalOpen(false);
@@ -348,7 +344,6 @@ export default function PlaylistDetailPage() {
                       onSelect={handlePlayTrack}
                       onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
                       onPreview={toggleTrackPreview}
-                      onDownload={handleDownload}
                       onRemove={handleRemoveTrack}
                       onCreatePlaylist={() => setIsModalOpen(true)}
                     />

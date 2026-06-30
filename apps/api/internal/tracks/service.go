@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hadinurhakim-coding/kims/apps/api/internal/storage"
@@ -81,6 +82,74 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Track, error) {
 	}
 
 	return track, nil
+}
+
+func (s *Service) GetPlayURL(
+	ctx context.Context,
+	trackID string,
+	storageSvc *storage.Service,
+) (*PlayURLResponse, error) {
+	track, err := s.repo.GetByID(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, ErrNotFound
+	}
+	if storageSvc == nil {
+		return nil, storage.ErrNotConfigured
+	}
+
+	const expirySeconds = 1800
+	signedURL, err := storageSvc.CreateSignedAudioURL(track.AudioURL, expirySeconds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create signed url: %w", err)
+	}
+
+	return &PlayURLResponse{
+		URL:       signedURL,
+		ExpiresIn: expirySeconds,
+	}, nil
+}
+
+func (s *Service) Download(
+	ctx context.Context,
+	trackID string,
+	userID string,
+	storageSvc *storage.Service,
+	historyRecorder HistoryRecorder,
+) (*DownloadResponse, error) {
+	track, err := s.repo.GetByID(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+	if track == nil {
+		return nil, ErrNotFound
+	}
+	if storageSvc == nil {
+		return nil, storage.ErrNotConfigured
+	}
+
+	const expirySeconds = 300
+	signedURL, err := storageSvc.CreateSignedAudioURL(track.AudioURL, expirySeconds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create signed url: %w", err)
+	}
+
+	if err := s.repo.IncrementDownloadCount(ctx, trackID); err != nil {
+		log.Printf("warning: failed to increment download count for track %s: %v", trackID, err)
+	}
+
+	if userID != "" && historyRecorder != nil {
+		if err := historyRecorder.Record(ctx, userID, trackID); err != nil {
+			log.Printf("warning: failed to record download history: %v", err)
+		}
+	}
+
+	return &DownloadResponse{
+		URL:       signedURL,
+		ExpiresIn: expirySeconds,
+	}, nil
 }
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*Track, error) {

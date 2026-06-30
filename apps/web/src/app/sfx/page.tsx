@@ -129,10 +129,6 @@ export default function SfxPage() {
     handlePlayTrack(track);
   }
 
-  function handleDownload(track: Track) {
-    console.log("Download track", track);
-  }
-
   async function handleCreatePlaylist(name: string) {
     await createPlaylist(name);
     setIsModalOpen(false);
@@ -197,7 +193,6 @@ export default function SfxPage() {
                   onSelect={handlePlayTrack}
                   onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
                   onPreview={toggleTrackPreview}
-                  onDownload={handleDownload}
                   onCreatePlaylist={() => setIsModalOpen(true)}
                 />
               ))

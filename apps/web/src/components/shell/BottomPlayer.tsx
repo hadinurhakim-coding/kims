@@ -5,6 +5,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 import type { Track } from "@/data/tracks";
 import {
   Heart,
+  Loader2,
   Pause,
   Play,
   Repeat,
@@ -26,6 +27,7 @@ export function BottomPlayer({ onFavorite }: BottomPlayerProps) {
   const {
     currentTrack,
     isPlaying,
+    isLoadingAudio,
     duration,
     currentTime,
     volume,
@@ -34,7 +36,7 @@ export function BottomPlayer({ onFavorite }: BottomPlayerProps) {
     setVolume,
   } = useAudio();
   const { isFavorite } = useFavorites();
-  const isDisabled = !isReady;
+  const isDisabled = !isReady || isLoadingAudio;
   const isTrackFavorite = currentTrack ? isFavorite(currentTrack.id) : false;
   const PlayPauseIcon = isPlaying ? Pause : Play;
   const progressWidth =
@@ -62,7 +64,10 @@ export function BottomPlayer({ onFavorite }: BottomPlayerProps) {
             alt={currentTrack.title}
             width={40}
             height={40}
-            className="h-10 w-10 shrink-0 rounded-[var(--radius-md)] object-cover"
+            className={[
+              "h-10 w-10 shrink-0 rounded-[var(--radius-md)] object-cover",
+              isLoadingAudio ? "animate-pulse" : "",
+            ].join(" ")}
           />
         ) : (
           <div className="h-10 w-10 shrink-0 rounded-[var(--radius-md)] bg-[var(--color-border)]" />
@@ -131,17 +136,21 @@ export function BottomPlayer({ onFavorite }: BottomPlayerProps) {
           </button>
           <button
             type="button"
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={isLoadingAudio ? "Loading audio" : isPlaying ? "Pause" : "Play"}
             disabled={isDisabled}
             onClick={togglePlayPause}
             className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-full)] bg-[var(--color-accent-primary)] text-[var(--color-surface)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_88%,var(--color-text-primary))] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           >
-            <PlayPauseIcon
-              className={[
-                "h-4 w-4",
-                isPlaying ? "" : "fill-[var(--color-surface)]",
-              ].join(" ")}
-            />
+            {isLoadingAudio ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlayPauseIcon
+                className={[
+                  "h-4 w-4",
+                  isPlaying ? "" : "fill-[var(--color-surface)]",
+                ].join(" ")}
+              />
+            )}
           </button>
           <button
             type="button"

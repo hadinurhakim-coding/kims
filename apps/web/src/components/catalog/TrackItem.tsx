@@ -3,16 +3,19 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { usePathname } from "next/navigation";
 import {
+  AlertCircle,
   Check,
   Download,
   Heart,
   ListPlus,
+  Loader2,
   Minus,
   Pause,
   Play,
   Plus,
 } from "lucide-react";
 import Image from "next/image";
+import { useAudio } from "@/context/AudioContext";
 import { usePlaylists } from "@/context/PlaylistContext";
 import type { Track } from "../../data/tracks";
 
@@ -24,7 +27,6 @@ export interface TrackItemProps {
   onSelect?: (track: Track) => void;
   onFavorite?: (track: Track) => void;
   onPreview?: (track: Track) => void;
-  onDownload?: (track: Track) => void;
   onRemove?: (track: Track) => void;
   onCreatePlaylist?: () => void;
 }
@@ -61,7 +63,6 @@ export function TrackItem({
   onSelect,
   onFavorite,
   onPreview,
-  onDownload,
   onRemove,
   onCreatePlaylist,
 }: TrackItemProps) {
@@ -72,8 +73,12 @@ export function TrackItem({
     removeTrackFromPlaylist,
     isTrackInPlaylist,
   } = usePlaylists();
+  const { currentTrack, isLoadingAudio } = useAudio();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isLoadingTrack = isLoadingAudio && currentTrack?.id === track.id;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -125,6 +130,48 @@ export function TrackItem({
     }
 
     void addTrackToPlaylist(playlistId, track.id);
+  }
+
+  async function handleDownload(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    setDownloadError(false);
+
+    try {
+      const res = await fetch(`/api/v1/tracks/${track.id}/download`);
+      if (!res.ok) {
+        const errorBody = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        console.error(
+          "[DOWNLOAD] Failed with status:",
+          res.status,
+          "body:",
+          errorBody,
+        );
+        throw new Error(errorBody?.error ?? "Download failed");
+      }
+
+      const data = (await res.json()) as { url?: unknown };
+      if (typeof data.url !== "string" || data.url === "") {
+        throw new Error("Invalid download response");
+      }
+
+      const link = document.createElement("a");
+      link.href = data.url;
+      link.download = `${track.title}.mp3`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Download failed:", error);
+      setDownloadError(true);
+      window.setTimeout(() => setDownloadError(false), 3000);
+    } finally {
+      setIsDownloading(false);
+    }
   }
 
   return (
@@ -211,16 +258,19 @@ export function TrackItem({
         </button>
         <button
           type="button"
-          aria-label={`${isPlaying ? "Pause" : "Play"} ${track.title}`}
+          aria-label={`${isLoadingTrack ? "Loading" : isPlaying ? "Pause" : "Play"} ${track.title}`}
+          disabled={isLoadingTrack}
           onClick={(event) => handleAction(event, onPreview)}
           className={[
-            "flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] transition-all duration-150 hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9",
-            isPlaying
+            "flex h-8 w-8 items-center justify-center rounded-[var(--radius-full)] transition-all duration-150 hover:bg-[var(--color-background)] disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:h-9 md:w-9",
+            isPlaying || isLoadingTrack
               ? "animate-pulse text-[var(--color-accent-primary)] ring-2 ring-[var(--color-accent-primary)] ring-offset-1 ring-offset-[var(--color-surface)]"
               : "text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-primary)]",
           ].join(" ")}
         >
-          {isPlaying ? (
+          {isLoadingTrack ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : isPlaying ? (
             <Pause className="h-5 w-5 fill-[var(--color-accent-primary)] transition-all duration-150" />
           ) : (
             <Play className="h-4 w-4 transition-all duration-150 group-hover:h-5 group-hover:w-5" />
@@ -228,11 +278,29 @@ export function TrackItem({
         </button>
         <button
           type="button"
-          aria-label={`Download ${track.title}`}
-          onClick={(event) => handleAction(event, onDownload)}
-          className="hidden h-9 w-9 items-center justify-center rounded-[var(--radius-full)] text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:flex"
+          aria-label={
+            downloadError
+              ? "Download failed, try again"
+              : isDownloading
+                ? `Downloading ${track.title}`
+                : `Download ${track.title}`
+          }
+          disabled={isDownloading}
+          onClick={handleDownload}
+          className={[
+            "hidden h-9 w-9 items-center justify-center rounded-[var(--radius-full)] transition-colors hover:bg-[var(--color-background)] disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)] md:flex",
+            downloadError
+              ? "text-[var(--color-danger)]"
+              : "text-[var(--color-text-muted)] hover:text-[var(--color-accent-primary)]",
+          ].join(" ")}
         >
-          <Download className="h-4 w-4" />
+          {downloadError ? (
+            <AlertCircle className="h-4 w-4" />
+          ) : isDownloading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
         </button>
         <div ref={dropdownRef} className="relative">
           <button

@@ -52,6 +52,7 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 	otpLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_OTP", 5, 10*time.Minute, "otp")
 	historyLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_HISTORY", 120, time.Minute, "history")
 	adminLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_ADMIN", 60, time.Minute, "admin")
+	mediaLimit := appmiddleware.RateLimitConfigFromEnv("RATE_LIMIT_MEDIA", 20, time.Minute, "media")
 
 	storageService := storage.NewServiceFromEnv()
 	authHandler := auth.NewHandler(auth.NewService(auth.NewRepository(rtr.dbConn)))
@@ -62,10 +63,16 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 		),
 	)
 	auditRepo := audit.NewRepository(rtr.dbConn)
-	tracksHandler := tracks.NewHandler(tracks.NewService(tracks.NewRepository(rtr.dbConn), storageService), auditRepo)
+	historyService := history.NewService(history.NewRepository(rtr.dbConn), storageService)
+	tracksHandler := tracks.NewHandler(
+		tracks.NewService(tracks.NewRepository(rtr.dbConn), storageService),
+		storageService,
+		historyService,
+		auditRepo,
+	)
 	favoritesHandler := favorites.NewHandler(favorites.NewService(favorites.NewRepository(rtr.dbConn), storageService))
 	playlistsHandler := playlists.NewHandler(playlists.NewService(playlists.NewRepository(rtr.dbConn), storageService))
-	historyHandler := history.NewHandler(history.NewService(history.NewRepository(rtr.dbConn), storageService))
+	historyHandler := history.NewHandler(historyService)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(rateLimiter.Middleware(apiLimit))
@@ -79,6 +86,8 @@ func (rtr *Router) registerAPIRoutes(r chi.Router) {
 
 		r.Get("/tracks", tracksHandler.List)
 		r.Get("/tracks/{id}", tracksHandler.GetByID)
+		r.With(rateLimiter.Middleware(mediaLimit)).Get("/tracks/{id}/play-url", tracksHandler.GetPlayURL)
+		r.With(rateLimiter.Middleware(mediaLimit), appmiddleware.OptionalAuth).Get("/tracks/{id}/download", tracksHandler.Download)
 
 		r.Group(func(r chi.Router) {
 			r.Use(appmiddleware.RequireAuth)

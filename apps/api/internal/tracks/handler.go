@@ -14,17 +14,29 @@ import (
 )
 
 type Handler struct {
-	svc   *Service
-	audit *audit.Repository
+	svc             *Service
+	storageSvc      *storage.Service
+	historyRecorder HistoryRecorder
+	audit           *audit.Repository
 }
 
-func NewHandler(svc *Service, auditRepo ...*audit.Repository) *Handler {
+func NewHandler(
+	svc *Service,
+	storageSvc *storage.Service,
+	historyRecorder HistoryRecorder,
+	auditRepo ...*audit.Repository,
+) *Handler {
 	var repo *audit.Repository
 	if len(auditRepo) > 0 {
 		repo = auditRepo[0]
 	}
 
-	return &Handler{svc: svc, audit: repo}
+	return &Handler{
+		svc:             svc,
+		storageSvc:      storageSvc,
+		historyRecorder: historyRecorder,
+		audit:           repo,
+	}
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +90,44 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	middleware.WriteJSON(w, http.StatusOK, track)
+}
+
+func (h *Handler) GetPlayURL(w http.ResponseWriter, r *http.Request) {
+	result, err := h.svc.GetPlayURL(r.Context(), chi.URLParam(r, "id"), h.storageSvc)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, "track not found")
+			return
+		}
+
+		writeError(w, http.StatusInternalServerError, "failed to generate playback url")
+		return
+	}
+
+	middleware.WriteJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) Download(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.GetUserID(r.Context())
+
+	result, err := h.svc.Download(
+		r.Context(),
+		chi.URLParam(r, "id"),
+		userID,
+		h.storageSvc,
+		h.historyRecorder,
+	)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, "track not found")
+			return
+		}
+
+		writeError(w, http.StatusInternalServerError, "failed to generate download url")
+		return
+	}
+
+	middleware.WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

@@ -71,6 +71,7 @@ func (r *Repository) List(ctx context.Context, params ListParams) ([]Track, int,
 			license_label,
 			cover_url,
 			audio_url,
+			download_count,
 			is_published,
 			created_at,
 			updated_at
@@ -114,6 +115,7 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*Track, error) {
 			license_label,
 			cover_url,
 			audio_url,
+			download_count,
 			is_published,
 			created_at,
 			updated_at
@@ -156,6 +158,7 @@ func (r *Repository) Create(ctx context.Context, req CreateRequest, isPublished 
 			license_label,
 			cover_url,
 			audio_url,
+			download_count,
 			is_published,
 			created_at,
 			updated_at
@@ -206,6 +209,7 @@ func (r *Repository) Update(ctx context.Context, id string, req CreateRequest, i
 			license_label,
 			cover_url,
 			audio_url,
+			download_count,
 			is_published,
 			created_at,
 			updated_at
@@ -245,6 +249,19 @@ func (r *Repository) Delete(ctx context.Context, id string) (bool, error) {
 	return tag.RowsAffected() > 0, nil
 }
 
+func (r *Repository) IncrementDownloadCount(ctx context.Context, trackID string) error {
+	_, err := r.dbConn.Exec(ctx, `
+		UPDATE tracks
+		SET download_count = download_count + 1
+		WHERE id = $1
+	`, trackID)
+	if err != nil {
+		return fmt.Errorf("increment download count: %w", err)
+	}
+
+	return nil
+}
+
 type trackScanner interface {
 	Scan(dest ...any) error
 }
@@ -261,6 +278,7 @@ func scanTrack(row trackScanner) (Track, error) {
 		&track.LicenseLabel,
 		&track.CoverURL,
 		&track.AudioURL,
+		&track.DownloadCount,
 		&track.IsPublished,
 		&track.CreatedAt,
 		&track.UpdatedAt,

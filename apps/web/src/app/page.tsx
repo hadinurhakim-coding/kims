@@ -231,10 +231,6 @@ export default function HomePage() {
     handlePlayTrack(track);
   }
 
-  function handleDownload(track: Track) {
-    console.log("Download track", track);
-  }
-
   async function handleCreatePlaylist(name: string) {
     await createPlaylist(name);
     setIsModalOpen(false);
@@ -312,7 +308,6 @@ export default function HomePage() {
                   onSelect={handlePlayTrack}
                   onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
                   onPreview={toggleTrackPreview}
-                  onDownload={handleDownload}
                   onCreatePlaylist={() => setIsModalOpen(true)}
                 />
               ))

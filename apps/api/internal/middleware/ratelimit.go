@@ -28,10 +28,12 @@ type RateLimiter struct {
 }
 
 func NewRateLimiter() *RateLimiter {
-	return &RateLimiter{
+	limiter := &RateLimiter{
 		entries: map[string]rateLimitEntry{},
 		now:     time.Now,
 	}
+	limiter.StartCleanup(5 * time.Minute)
+	return limiter
 }
 
 func NewRateLimiterForTests(now func() time.Time) *RateLimiter {
@@ -101,6 +103,23 @@ func (l *RateLimiter) cleanupExpired(now time.Time) {
 			delete(l.entries, key)
 		}
 	}
+}
+
+func (l *RateLimiter) StartCleanup(interval time.Duration) {
+	if interval <= 0 {
+		interval = 5 * time.Minute
+	}
+
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			l.mu.Lock()
+			l.cleanupExpired(l.now())
+			l.mu.Unlock()
+		}
+	}()
 }
 
 func RateLimitConfigFromEnv(prefix string, fallbackLimit int, fallbackWindow time.Duration, scope string) RateLimitConfig {

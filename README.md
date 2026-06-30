@@ -65,6 +65,38 @@ cd apps/api
 go run ./cmd/api
 ```
 
+Restart local servers quickly on Windows:
+
+```powershell
+.\scripts\kill-ports.ps1
+.\run-frontend-local-and-migrate.bat
+```
+
+The kill script clears the default local ports before restart:
+
+- `3000` for the frontend
+- `8080` for the backend
+- `8081` for backup/testing
+
+You can also run it through npm:
+
+```powershell
+npm run kill-ports
+.\run-frontend-local-and-migrate.bat
+```
+
+To clear specific ports only:
+
+```powershell
+.\scripts\kill-ports.ps1 -Ports 3000,8080
+```
+
+On Unix or macOS:
+
+```bash
+./scripts/kill-ports.sh
+```
+
 ## Project Structure
 
 ```text

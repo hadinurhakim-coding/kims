@@ -16,6 +16,7 @@ import {
 export interface AudioContextValue {
   currentTrack: Track | null;
   isPlaying: boolean;
+  isLoadingAudio: boolean;
   duration: number;
   currentTime: number;
   volume: number;
@@ -27,14 +28,6 @@ export interface AudioContextValue {
 }
 
 const AudioContext = createContext<AudioContextValue | null>(null);
-
-function isPlayableAudioSource(source: string) {
-  return (
-    source.startsWith("/") ||
-    source.startsWith("http://") ||
-    source.startsWith("https://")
-  );
-}
 
 function isExpectedPlaybackInterruption(error: unknown) {
   return (
@@ -55,6 +48,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [volumeState, setVolumeState] = useState(0.8);
   const [isReady, setIsReady] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
   useEffect(() => {
     currentTrackRef.current = currentTrack;
@@ -136,7 +130,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playTrack = useCallback(
-    (track: Track) => {
+    async (track: Track) => {
       const audio = audioRef.current;
       const playRequest = playRequestRef.current + 1;
       playRequestRef.current = playRequest;
@@ -144,32 +138,57 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       if (!audio) return;
 
       if (currentTrackRef.current?.id === track.id) {
-        void playAudio(audio);
+        if (!isPlaying) {
+          void playAudio(audio);
+        }
         return;
       }
 
+      setIsLoadingAudio(true);
       setCurrentTrack(track);
       setIsReady(false);
       setIsPlaying(false);
       setDuration(0);
       setCurrentTime(0);
 
-      if (!isPlayableAudioSource(track.audioSrc)) {
-        return;
-      }
+      try {
+        const res = await fetch(`/api/v1/tracks/${track.id}/play-url`);
+        if (!res.ok) {
+          throw new Error("Failed to get playback URL");
+        }
 
-      audio.pause();
-      audio.currentTime = 0;
-      audio.src = track.audioSrc;
-      audio.load();
+        const data = (await res.json()) as { url?: unknown };
+        if (typeof data.url !== "string" || data.url === "") {
+          throw new Error("Invalid playback URL response");
+        }
 
-      void playAudio(audio).then((didPlay) => {
+        if (playRequestRef.current !== playRequest) {
+          return;
+        }
+
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = data.url;
+        audio.load();
+
+        const didPlay = await playAudio(audio);
         if (didPlay && playRequestRef.current === playRequest) {
           void recordPlay(track.id);
         }
-      });
+      } catch (error) {
+        if (playRequestRef.current === playRequest) {
+          console.error("Failed to load track audio:", error);
+          setCurrentTrack(null);
+          setIsPlaying(false);
+          setIsReady(false);
+        }
+      } finally {
+        if (playRequestRef.current === playRequest) {
+          setIsLoadingAudio(false);
+        }
+      }
     },
-    [playAudio, recordPlay],
+    [isPlaying, playAudio, recordPlay],
   );
 
   const togglePlayPause = useCallback(() => {
@@ -213,6 +232,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     () => ({
       currentTrack,
       isPlaying,
+      isLoadingAudio,
       duration,
       currentTime,
       volume: volumeState,
@@ -225,6 +245,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     [
       currentTrack,
       isPlaying,
+      isLoadingAudio,
       duration,
       currentTime,
       volumeState,
