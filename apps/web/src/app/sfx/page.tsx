@@ -10,30 +10,32 @@ import {
   type SortKey,
   type SortOrder,
 } from "@/components/catalog/SortControls";
-import { TrackItem } from "@/components/catalog/TrackItem";
-import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
 import { AppShell } from "@/components/shell/AppShell";
 import { BottomPlayer } from "@/components/shell/BottomPlayer";
 import { RightPanel } from "@/components/shell/RightPanel";
+import { SfxSoundboard } from "@/components/sfx/SfxSoundboard";
 import { useAudio } from "@/context/AudioContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useHistory } from "@/context/HistoryContext";
-import { usePlaylists } from "@/context/PlaylistContext";
 import { useTracks } from "@/context/TracksContext";
 import type { Track } from "@/data/tracks";
 
 export default function SfxPage() {
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { toggleFavorite } = useFavorites();
   const { history } = useHistory();
-  const { createPlaylist } = usePlaylists();
   const { tracks } = useTracks();
-  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-  const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudio();
+  const {
+    currentTrack,
+    isPlaying,
+    isLoadingAudio,
+    playTrack,
+    seek,
+    togglePlayPause,
+  } = useAudio();
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("default");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const sfxTracks = useMemo(
     () => tracks.filter((track) => track.type === "SFX"),
@@ -66,7 +68,7 @@ export default function SfxPage() {
   );
 
   const visibleTracks = useMemo(() => {
-    const baseTracks = tracks.filter((track) => track.type === "SFX");
+    const baseTracks = sfxTracks;
     const filteredTracks =
       activeFilter === "All"
         ? baseTracks
@@ -99,7 +101,7 @@ export default function SfxPage() {
           });
 
     return sortOrder === "desc" ? sortedTracks.reverse() : sortedTracks;
-  }, [activeFilter, sortKey, sortOrder, tracks]);
+  }, [activeFilter, sfxTracks, sortKey, sortOrder]);
 
   function parseDuration(duration: string) {
     const [minutes, seconds] = duration.split(":").map(Number);
@@ -114,24 +116,21 @@ export default function SfxPage() {
   }
 
   function handlePlayTrack(track: Track) {
-    setSelectedTrack(track);
     playTrack(track);
   }
 
-  function toggleTrackPreview(track: Track) {
-    setSelectedTrack(track);
-
+  function triggerSoundEffect(track: Track) {
     if (currentTrack?.id === track.id) {
-      togglePlayPause();
+      seek(0);
+
+      if (!isPlaying) {
+        togglePlayPause();
+      }
+
       return;
     }
 
-    handlePlayTrack(track);
-  }
-
-  async function handleCreatePlaylist(name: string) {
-    await createPlaylist(name);
-    setIsModalOpen(false);
+    playTrack(track);
   }
 
   return (
@@ -176,36 +175,38 @@ export default function SfxPage() {
             />
           }
         >
-          <div className="flex flex-col gap-2">
-            {activeFilter !== "All" && visibleTracks.length === 0 ? (
-              <EmptySearch
-                query={activeFilter}
-                onClear={() => setActiveFilter("All")}
-              />
-            ) : (
-              visibleTracks.map((track, index) => (
-                <TrackItem
-                  key={track.id}
-                  track={{ ...track, isFavorite: isFavorite(track.id) }}
-                  rank={index + 1}
-                  isSelected={selectedTrack?.id === track.id}
-                  isPlaying={currentTrack?.id === track.id && isPlaying}
-                  onSelect={handlePlayTrack}
-                  onFavorite={(nextTrack) => toggleFavorite(nextTrack.id)}
-                  onPreview={toggleTrackPreview}
-                  onCreatePlaylist={() => setIsModalOpen(true)}
+          <div className="flex flex-col gap-4">
+            <SfxSoundboard
+              tracks={visibleTracks}
+              currentTrackId={currentTrack?.id}
+              isPlaying={isPlaying}
+              isLoadingTrackId={
+                isLoadingAudio && currentTrack ? currentTrack.id : undefined
+              }
+              onTrigger={triggerSoundEffect}
+            />
+
+            <div className="flex flex-col gap-2">
+              {activeFilter !== "All" && visibleTracks.length === 0 ? (
+                <EmptySearch
+                  query={activeFilter}
+                  onClear={() => setActiveFilter("All")}
                 />
-              ))
-            )}
+              ) : activeFilter === "All" && visibleTracks.length === 0 ? (
+                <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-10 text-center">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                    No sound effects in database
+                  </h3>
+                  <p className="mt-2 max-w-sm text-sm text-[var(--color-text-muted)]">
+                    Add SFX tracks from the admin/API catalog and they will
+                    appear here.
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
         </CatalogLayout>
       </div>
-
-      <CreatePlaylistModal
-        isOpen={isModalOpen}
-        onConfirm={handleCreatePlaylist}
-        onCancel={() => setIsModalOpen(false)}
-      />
     </AppShell>
   );
 }

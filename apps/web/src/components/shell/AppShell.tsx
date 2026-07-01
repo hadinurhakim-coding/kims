@@ -2,6 +2,7 @@
 
 import { cloneElement, isValidElement, useState, type ReactNode } from "react";
 import { useAudio } from "@/context/AudioContext";
+import { FullPlayerSheet } from "./FullPlayerSheet";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { PageTransition } from "./PageTransition";
 import { Sidebar } from "./Sidebar";
@@ -78,42 +79,8 @@ export function AppShell({
         </footer>
       ) : null}
 
-      {rightPanel && isMobilePanelOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Now playing details"
-          className="fixed inset-0 z-[70] lg:hidden"
-        >
-          <button
-            type="button"
-            aria-label="Close details"
-            onClick={() => setIsMobilePanelOpen(false)}
-            className="absolute inset-0 h-full w-full bg-black/40"
-          />
-          <section className="absolute bottom-0 left-0 right-0 max-h-[82dvh] overflow-hidden rounded-t-[24px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_-10px_28px_rgba(0,0,0,0.18)]">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-              <div>
-                <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
-                  Now Playing
-                </h2>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Details and recent tracks
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobilePanelOpen(false)}
-                className="flex h-11 items-center justify-center rounded-[var(--radius-full)] px-4 text-sm font-semibold text-[var(--color-accent-primary)] transition-colors hover:bg-[var(--color-background)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent-primary)]"
-              >
-                Close
-              </button>
-            </div>
-            <div className="max-h-[calc(82dvh-65px)] overflow-y-auto">
-              {rightPanel}
-            </div>
-          </section>
-        </div>
+      {currentTrack && isMobilePanelOpen ? (
+        <FullPlayerSheet onClose={() => setIsMobilePanelOpen(false)} />
       ) : null}
 
       <MobileBottomNav />

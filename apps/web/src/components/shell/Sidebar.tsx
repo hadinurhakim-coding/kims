@@ -5,6 +5,7 @@ import {
   Film,
   Heart,
   History,
+  Library,
   ListMusic,
   LogIn,
   LogOut,
@@ -49,6 +50,7 @@ const sections: NavSection[] = [
   {
     label: "LIBRARY",
     items: [
+      { label: "Library", href: "/library", icon: Library },
       { label: "Favorites", href: "/favorites", icon: Heart },
       { label: "Playlists", href: "/playlists", icon: ListMusic },
       { label: "History", href: "/history", icon: History },

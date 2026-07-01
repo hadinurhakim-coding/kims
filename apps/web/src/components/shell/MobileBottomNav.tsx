@@ -33,9 +33,10 @@ const mobileNavItems: MobileNavItem[] = [
   },
   {
     label: "Library",
-    href: "/favorites",
+    href: "/library",
     icon: Library,
     isActive: (pathname) =>
+      pathname === "/library" ||
       pathname === "/favorites" ||
       pathname === "/playlists" ||
       pathname.startsWith("/playlists/") ||
